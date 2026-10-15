@@ -1,4 +1,4 @@
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import * as React from "react";
 import { Alert, View } from "react-native";
 
@@ -190,7 +190,7 @@ export function RuleForm({ ruleId }: { ruleId: string }) {
 
   return (
     <>
-      <Stack.Screen options={header} />
+      {header}
       <EntryLayout
         keypad={
           showKeypad ? (

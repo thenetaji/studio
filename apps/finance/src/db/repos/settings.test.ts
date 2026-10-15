@@ -20,6 +20,7 @@ describe("settings", () => {
       [
         "display_currency",
         "theme",
+        "accent",
         "haptics",
         "show_decimals",
         "week_start",
@@ -35,6 +36,7 @@ describe("settings", () => {
         "icon_style",
         "icon_background",
         "home_layout",
+        "pockets",
         "hide_amounts",
         "reminder_daily_enabled",
         "reminder_daily_time",

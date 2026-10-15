@@ -1,3 +1,4 @@
+export * from "./accent";
 export * from "./haptics";
 export * from "./theme";
 export * from "./tokens";

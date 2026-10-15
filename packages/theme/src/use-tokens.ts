@@ -1,10 +1,12 @@
 import { useMemo } from "react";
 import { useUniwind } from "uniwind";
 
+import { useAccent } from "./accent";
+
 import {
+  buildColors,
   categoryColors,
   categoryInk,
-  colors,
   durations,
   incomeSoft,
   radii,
@@ -19,11 +21,13 @@ import {
 export function useTokens() {
   const { theme } = useUniwind();
   const scheme: Scheme = theme === "dark" ? "dark" : "light";
+  const accent = useAccent();
   return useMemo(
     () => ({
       scheme,
       isDark: scheme === "dark",
-      colors: colors[scheme],
+      accentKey: accent,
+      colors: buildColors(scheme, accent),
       category: categoryColors[scheme],
       incomeSoft: incomeSoft[scheme],
       ink: categoryInk,
@@ -34,7 +38,7 @@ export function useTokens() {
       springs,
       shadows,
     }),
-    [scheme],
+    [scheme, accent],
   );
 }
 

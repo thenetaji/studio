@@ -8,6 +8,8 @@ import {
   type IconBackground,
   type IconStyle,
 } from "@studio/icons";
+import { accentPresets, type AccentPresetKey } from "@studio/theme";
+import { normalizePockets, type Pocket } from "./pockets";
 import {
   DEFAULT_HOME_LAYOUT,
   normalizeHomeLayout,
@@ -27,6 +29,8 @@ export const SYNC_PROVIDER_IDS: readonly SyncProviderId[] = [
 export interface SettingsMap {
   display_currency: string;
   theme: "system" | "light" | "dark";
+  /** Accent colour preset. */
+  accent: AccentPresetKey;
   haptics: boolean;
   show_decimals: boolean;
   week_start: 1 | 7;
@@ -43,6 +47,8 @@ export interface SettingsMap {
   icon_background: IconBackground;
   /** Order and visibility of the Home sections below the hero. */
   home_layout: HomeSectionPref[];
+  /** Accounts refilled by transfers (pocket money). */
+  pockets: Pocket[];
   /** Mask amounts on screen (Home, lists) until revealed. */
   hide_amounts: boolean;
   reminder_daily_enabled: boolean;
@@ -62,6 +68,7 @@ export type SettingKey = keyof SettingsMap;
 export const DEFAULT_SETTINGS: Readonly<SettingsMap> = {
   display_currency: "USD",
   theme: "system",
+  accent: "ivory",
   haptics: true,
   show_decimals: false,
   week_start: 1,
@@ -77,6 +84,7 @@ export const DEFAULT_SETTINGS: Readonly<SettingsMap> = {
   icon_style: "phosphor-duotone",
   icon_background: "graphite-glyph",
   home_layout: DEFAULT_HOME_LAYOUT.map((s) => ({ ...s })),
+  pockets: [],
   hide_amounts: false,
   reminder_daily_enabled: false,
   reminder_daily_time: "21:00",
@@ -88,6 +96,7 @@ export const DEFAULT_SETTINGS: Readonly<SettingsMap> = {
 };
 
 const ENUMS: Partial<Record<SettingKey, readonly unknown[]>> = {
+  accent: Object.keys(accentPresets),
   icon_style: ICON_STYLES,
   icon_background: ICON_BACKGROUNDS,
   sync_provider: SYNC_PROVIDER_IDS,
@@ -107,6 +116,7 @@ function decode<K extends SettingKey>(
     if (allowed && !allowed.includes(value)) return DEFAULT_SETTINGS[key];
     if (key === "home_layout")
       return normalizeHomeLayout(value) as SettingsMap[K];
+    if (key === "pockets") return normalizePockets(value) as SettingsMap[K];
     if (
       key === "reminder_daily_time" &&
       !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(value))

@@ -1,7 +1,8 @@
-import type { NativeStackNavigationOptions } from "expo-router";
+import { Stack } from "expo-router";
 import * as React from "react";
+import { Platform, View } from "react-native";
 
-import { barLeft, barRight, Button, Text } from "@studio/ui";
+import { Button, Text } from "@studio/ui";
 
 type SheetHeaderOptions = {
   title: string;
@@ -11,44 +12,11 @@ type SheetHeaderOptions = {
   saveLabel?: string;
 };
 
-/** Native toolbar for a form sheet: Cancel on the left, Save on the right. */
-function sheetHeader({
-  title,
-  onCancel,
-  onSave,
-  saveDisabled = false,
-  saveLabel = "Save",
-}: SheetHeaderOptions): NativeStackNavigationOptions {
-  return {
-    title,
-    headerShown: true,
-    ...barLeft(
-      <Button
-        variant="barSecondary"
-        size="sm"
-        onPress={onCancel}
-        accessibilityLabel="Cancel"
-      >
-        <Text variant="body">Cancel</Text>
-      </Button>,
-    ),
-    ...barRight(
-      <Button
-        variant="barPrimary"
-        size="sm"
-        disabled={saveDisabled}
-        onPress={onSave}
-        accessibilityLabel={saveLabel}
-      >
-        <Text variant="headline">{saveLabel}</Text>
-      </Button>,
-    ),
-  };
-}
+const HIDE_NATIVE = { headerShown: false } as const;
 
 /**
- * Stable toolbar options: callbacks go through refs so the options object only changes with the
- * title or the Save state, never on every render (a fresh object each render makes the navigator re-render in a loop).
+ * In-sheet toolbar: Cancel, title, Save. Drawn in the content (native header hidden) like the add sheet,
+ * because iOS 26 form sheets with a native header rendered the body blank.
  */
 export function useSheetHeader({
   title,
@@ -56,25 +24,45 @@ export function useSheetHeader({
   onSave,
   saveDisabled = false,
   saveLabel = "Save",
-}: SheetHeaderOptions): NativeStackNavigationOptions {
-  // Handlers are read from refs at press time only; the compiler cannot see that.
-  "use no memo";
-  const cancel = React.useRef(onCancel);
-  const save = React.useRef(onSave);
-  React.useEffect(() => {
-    cancel.current = onCancel;
-    save.current = onSave;
-  });
-  return React.useMemo(
-    () =>
-      // eslint-disable-next-line react-hooks/refs -- the refs are only read when a button is pressed
-      sheetHeader({
-        title,
-        onCancel: () => cancel.current(),
-        onSave: () => save.current(),
-        saveDisabled,
-        saveLabel,
-      }),
-    [title, saveDisabled, saveLabel],
+}: SheetHeaderOptions): React.ReactElement {
+  return (
+    <>
+      <Stack.Screen options={HIDE_NATIVE} />
+      <View
+        className="h-12 flex-row items-center bg-bg px-2"
+        style={{ marginTop: Platform.OS === "ios" ? 8 : 0 }}
+      >
+        <Button
+          variant="barSecondary"
+          size="sm"
+          onPress={onCancel}
+          accessibilityLabel="Cancel"
+        >
+          <Text variant="body">Cancel</Text>
+        </Button>
+        <Text
+          variant="headline"
+          accessibilityRole="header"
+          numberOfLines={1}
+          className="mx-2 min-w-0 flex-1 text-center"
+        >
+          {title}
+        </Text>
+        <Button
+          variant="barPrimary"
+          size="sm"
+          disabled={saveDisabled}
+          onPress={onSave}
+          accessibilityLabel={saveLabel}
+        >
+          <Text
+            variant="headline"
+            style={saveDisabled ? { opacity: 0.4 } : undefined}
+          >
+            {saveLabel}
+          </Text>
+        </Button>
+      </View>
+    </>
   );
 }

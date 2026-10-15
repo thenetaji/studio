@@ -156,7 +156,12 @@ export const collapsedCategory = (
 // ---------------------------------------------------------------- defaults
 
 export interface DefaultsInput {
-  params: { kind?: string; accountId?: string; categoryId?: string };
+  params: {
+    kind?: string;
+    accountId?: string;
+    toAccountId?: string;
+    categoryId?: string;
+  };
   lastKind: TransactionKind;
   lastAccountId: string | null;
   defaultAccountId: string | null;
@@ -187,7 +192,9 @@ export function resolveDefaults(input: DefaultsInput): ResolvedDefaults {
     accounts[0]?.id ??
     null;
   const transferAccountId =
-    kind === "transfer" ? pickOtherAccount(accounts, accountId, null) : null;
+    kind === "transfer"
+      ? pickOtherAccount(accounts, accountId, params.toAccountId ?? null)
+      : null;
   const category = params.categoryId
     ? input.categories.find((c) => c.id === params.categoryId)
     : undefined;

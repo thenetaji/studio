@@ -1,7 +1,7 @@
 {
   "name": "finance",
   "main": "expo-router/entry",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "dependencies": {
     "@expo/ui": "~57.0.21",
     "@expo/vector-icons": "^15.1.1",
@@ -24,6 +24,7 @@
     "date-fns": "^4.4.0",
     "drizzle-orm": "^0.45.3",
     "expo": "~57.0.26",
+    "expo-alternate-app-icons": "^8.0.0",
     "expo-blur": "~57.0.3",
     "expo-constants": "~57.0.20",
     "expo-crypto": "~57.0.3",

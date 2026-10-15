@@ -2,6 +2,7 @@
 export const HOME_SECTION_IDS = [
   "quick_add",
   "stats",
+  "pockets",
   "coming_up",
   "heatmap",
   "top_categories",
@@ -18,6 +19,7 @@ export interface HomeSectionPref {
 export const HOME_SECTION_LABELS: Record<HomeSectionId, string> = {
   quick_add: "Quick add",
   stats: "Summary",
+  pockets: "Pocket money",
   coming_up: "Coming up",
   heatmap: "Spending heatmap",
   top_categories: "Top categories",
@@ -31,9 +33,14 @@ const isSectionId = (value: unknown): value is HomeSectionId =>
   typeof value === "string" &&
   (HOME_SECTION_IDS as readonly string[]).includes(value);
 
+/** Sections added in a later build that should land after a given section instead of at the end. */
+const INSERT_AFTER: Partial<Record<HomeSectionId, HomeSectionId>> = {
+  pockets: "stats",
+};
+
 /**
- * Repairs a stored layout: drops unknown and duplicate ids, coerces `visible` to a boolean and appends any
- * section the stored value does not mention (a section added in a later build shows up, visible, at the end).
+ * Repairs a stored layout: drops unknown and duplicate ids, coerces `visible` to a boolean and adds any
+ * section the stored value does not mention, visible, at the end (or after its `INSERT_AFTER` anchor).
  */
 export function normalizeHomeLayout(value: unknown): HomeSectionPref[] {
   const out: HomeSectionPref[] = [];
@@ -49,8 +56,13 @@ export function normalizeHomeLayout(value: unknown): HomeSectionPref[] {
       });
     }
   }
-  for (const id of HOME_SECTION_IDS)
-    if (!seen.has(id)) out.push({ id, visible: true });
+  for (const id of HOME_SECTION_IDS) {
+    if (seen.has(id)) continue;
+    const anchor = INSERT_AFTER[id];
+    const at = anchor ? out.findIndex((s) => s.id === anchor) : -1;
+    if (at >= 0) out.splice(at + 1, 0, { id, visible: true });
+    else out.push({ id, visible: true });
+  }
   return out;
 }
 

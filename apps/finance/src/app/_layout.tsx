@@ -19,6 +19,7 @@ import {
   setHapticsEnabled,
   applyThemePreference,
   followWebColorScheme,
+  setAccent,
   useTokens,
 } from "@studio/theme";
 
@@ -112,12 +113,16 @@ function Navigator() {
   useIconPrefsSync();
   const { colors } = useTokens();
   const [theme] = useSetting("theme");
+  const [accent] = useSetting("accent");
   const [haptics] = useSetting("haptics");
   const [onboardingDone] = useSetting("onboarding_done");
 
   useEffect(() => {
     applyThemePreference(theme);
   }, [theme]);
+  useEffect(() => {
+    setAccent(accent);
+  }, [accent]);
   useEffect(() => {
     setHapticsEnabled(haptics);
   }, [haptics]);

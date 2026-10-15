@@ -197,6 +197,9 @@ function populate(db: Db, now: number): void {
   setSetting(db, "display_currency", "INR");
   setSetting(db, "onboarding_done", true);
   setSetting(db, "last_account_id", bank.id);
+  setSetting(db, "pockets", [
+    { accountId: cash.id, amount: 600_000, fromAccountId: bank.id },
+  ]);
   setRate(db, "USD", "INR", 84.5, now);
 
   const rules: [string, number, number, string, string, number][] = [

@@ -1,5 +1,7 @@
 import * as React from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
+
+import { useKeyboardInset } from "./use-keyboard-inset";
 
 type EntryLayoutProps = {
   /** Scrolling content: the readout first, then the grouped fields. */
@@ -10,12 +12,10 @@ type EntryLayoutProps = {
 
 /** Sheet body: scrolling fields over an optional pinned keypad, the same shape as the add sheet. */
 function EntryLayout({ children, keypad }: EntryLayoutProps) {
+  const keyboardInset = useKeyboardInset();
   return (
     <View className="flex-1 bg-bg">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        className="flex-1"
-      >
+      <View className="flex-1" style={{ paddingBottom: keyboardInset }}>
         <ScrollView
           className="flex-1"
           contentContainerClassName="gap-4 pb-6 pt-2"
@@ -26,7 +26,7 @@ function EntryLayout({ children, keypad }: EntryLayoutProps) {
           {children}
         </ScrollView>
         {keypad}
-      </KeyboardAvoidingView>
+      </View>
     </View>
   );
 }

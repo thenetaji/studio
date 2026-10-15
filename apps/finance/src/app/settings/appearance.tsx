@@ -1,7 +1,15 @@
+import { Image } from "expo-image";
+import * as React from "react";
 import { ScrollView, View } from "react-native";
 
 import { IconTile, ListGroup, ListRow, Pressable, Text } from "@studio/ui";
 import { useSetting } from "@/data/hooks";
+import {
+  appIconSupported,
+  currentAppIcon,
+  setAppIcon,
+  type AppIconName,
+} from "@/lib/app-icon";
 import { AppIcon, useIconPrefs } from "@studio/icons";
 import {
   ICON_BACKGROUND_LABELS,
@@ -11,14 +19,36 @@ import {
   type IconBackground,
   type IconStyle,
 } from "@studio/icons";
-import { haptic, useTokens } from "@studio/theme";
-import type { CategoryColorKey } from "@studio/theme";
+import { accentPresets, haptic, useTokens } from "@studio/theme";
+import type { AccentPresetKey, CategoryColorKey } from "@studio/theme";
 
 const options = [
   { value: "system", label: "System" },
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
 ] as const;
+
+const ACCENTS: readonly { key: AccentPresetKey; label: string }[] = [
+  { key: "brass", label: "Gold" },
+  { key: "ivory", label: "Silver" },
+  { key: "slate", label: "Slate" },
+  { key: "sage", label: "Sage" },
+  { key: "copper", label: "Copper" },
+];
+
+const APP_ICONS: readonly { name: AppIconName; label: string; source: number }[] =
+  [
+    {
+      name: "default",
+      label: "Bars",
+      source: require("../../../assets/images/icon.png"),
+    },
+    {
+      name: "Rupee",
+      label: "Rupee",
+      source: require("../../../assets/images/icon-rupee.png"),
+    },
+  ];
 
 /** Sample concepts and colours shown in every preview. */
 const SAMPLES: readonly { icon: string; color: CategoryColorKey }[] = [
@@ -96,8 +126,16 @@ function OptionCard({
 }
 
 export default function Appearance() {
-  const { colors, category } = useTokens();
+  const { colors, category, scheme } = useTokens();
   const [theme, setTheme] = useSetting("theme");
+  const [accent, setAccent] = useSetting("accent");
+  const [appIcon, setAppIconState] = React.useState(currentAppIcon);
+  const pickAppIcon = (next: AppIconName) => {
+    if (next === appIcon || !appIconSupported) return;
+    haptic("selection");
+    setAppIconState(next);
+    setAppIcon(next).catch(() => setAppIconState(currentAppIcon()));
+  };
   const [style, setStyle] = useSetting("icon_style");
   const [background, setBackground] = useSetting("icon_background");
   const store = useIconPrefs();
@@ -157,6 +195,99 @@ export default function Appearance() {
             />
           ))}
         </ListGroup>
+      </View>
+
+      <View>
+        <SectionTitle>Accent</SectionTitle>
+        <View
+          className="mx-4 flex-row justify-around rounded-[18px] bg-surface px-3 py-4"
+          style={{ borderWidth: 1, borderColor: colors.border }}
+          accessibilityRole="radiogroup"
+        >
+          {ACCENTS.map(({ key, label }) => {
+            const on = accent === key;
+            const fill = accentPresets[key][scheme];
+            return (
+              <Pressable
+                key={key}
+                role="radio"
+                accessibilityLabel={label}
+                accessibilityState={{ selected: on }}
+                popWhen={on}
+                onPress={() => {
+                  if (on) return;
+                  haptic("selection");
+                  setAccent(key);
+                }}
+                className="items-center gap-1.5"
+              >
+                <View
+                  className="h-11 w-11 items-center justify-center rounded-full"
+                  style={{
+                    borderWidth: 2,
+                    borderColor: on ? fill.accent : "transparent",
+                  }}
+                >
+                  <View
+                    className="h-8 w-8 items-center justify-center rounded-full"
+                    style={{ backgroundColor: fill.accent }}
+                  >
+                    {on ? (
+                      <AppIcon name="check" size={14} color={fill.onAccent} />
+                    ) : null}
+                  </View>
+                </View>
+                <Text
+                  variant="caption"
+                  tone={on ? "default" : "secondary"}
+                  numberOfLines={1}
+                >
+                  {label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      <View>
+        <SectionTitle>App icon</SectionTitle>
+        <View
+          className="mx-4 flex-row gap-6 rounded-[18px] bg-surface px-5 py-4"
+          style={{ borderWidth: 1, borderColor: colors.border }}
+          accessibilityRole="radiogroup"
+        >
+          {APP_ICONS.map(({ name, label, source }) => {
+            const on = appIcon === name;
+            return (
+              <Pressable
+                key={name}
+                role="radio"
+                accessibilityLabel={`${label} app icon`}
+                accessibilityState={{ selected: on }}
+                popWhen={on}
+                onPress={() => pickAppIcon(name)}
+                className="items-center gap-2"
+              >
+                <View
+                  className="rounded-[20px] p-[3px]"
+                  style={{
+                    borderWidth: 2,
+                    borderColor: on ? colors.accent : "transparent",
+                  }}
+                >
+                  <Image
+                    source={source}
+                    style={{ width: 64, height: 64, borderRadius: 15 }}
+                  />
+                </View>
+                <Text variant="caption" tone={on ? "default" : "secondary"}>
+                  {label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
       <View>

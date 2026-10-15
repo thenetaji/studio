@@ -39,7 +39,7 @@ export type SemanticColors = {
   overlayText: string;
 };
 
-export type AccentPresetKey = "brass" | "ivory";
+export type AccentPresetKey = "brass" | "slate" | "sage" | "copper" | "ivory";
 
 /** The accent is one token group: fill, link text, soft tint, text on the fill, pressed fill. */
 export type AccentColors = Pick<
@@ -67,6 +67,54 @@ export const accentPresets: Record<
       accentDeep: "#BA904C",
     },
   },
+  slate: {
+    light: {
+      accent: "#56708E",
+      accentText: "#435A75",
+      accentSoft: "rgba(86,112,142,0.12)",
+      onAccent: "#FFFFFF",
+      accentDeep: "#4A6280",
+    },
+    dark: {
+      accent: "#A9BCD3",
+      accentText: "#A9BCD3",
+      accentSoft: "rgba(169,188,211,0.14)",
+      onAccent: "#0E131A",
+      accentDeep: "#8296AF",
+    },
+  },
+  sage: {
+    light: {
+      accent: "#5F7A57",
+      accentText: "#4B6345",
+      accentSoft: "rgba(95,122,87,0.12)",
+      onAccent: "#FFFFFF",
+      accentDeep: "#536C4C",
+    },
+    dark: {
+      accent: "#B2C7A8",
+      accentText: "#B2C7A8",
+      accentSoft: "rgba(178,199,168,0.14)",
+      onAccent: "#10160E",
+      accentDeep: "#8DA582",
+    },
+  },
+  copper: {
+    light: {
+      accent: "#A86A52",
+      accentText: "#8A533E",
+      accentSoft: "rgba(168,106,82,0.12)",
+      onAccent: "#FFFFFF",
+      accentDeep: "#955D47",
+    },
+    dark: {
+      accent: "#DDAA93",
+      accentText: "#DDAA93",
+      accentSoft: "rgba(221,170,147,0.14)",
+      onAccent: "#1C110C",
+      accentDeep: "#BC856D",
+    },
+  },
   ivory: {
     light: {
       accent: "#161310",
@@ -85,7 +133,7 @@ export const accentPresets: Record<
   },
 };
 
-/** The one switch: change this (later, a setting) to re-skin the accent. global.css `--tint*` mirror the default. */
+/** Default accent; `setAccent` re-skins at runtime. global.css `--tint*` mirror this default. */
 export const accentPreset: AccentPresetKey = "brass";
 
 const base: Record<Scheme, Omit<SemanticColors, keyof AccentColors>> = {

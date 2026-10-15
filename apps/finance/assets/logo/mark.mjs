@@ -1,100 +1,52 @@
-// Source of the app logo: a three-segment donut whose opening on the right makes it a "C" (cadence) — the
-// Insights spending donut reduced to its essentials. Brass (the accent) leads, ivory (the text colour) and mint
-// (the income colour) follow, on a deep emerald field.
+// Source of the app logo: three ascending rounded bars, a steady rhythm that climbs (cadence). Silver bars, the
+// tallest in champagne, on a graphite-black field.
 // `render.mjs` writes these SVGs next to this file and renders them to the PNGs app.json points at.
 
-const FIELD = { top: "#17604B", mid: "#0C3E30", base: "#05231B" };
+const FIELD = { top: "#2A2A2D", mid: "#121214", base: "#050506" };
 
-/** Segments clockwise from the lower terminal of the C. `w` is the share of the ring; `c` is [light, deep]. */
+/** Bars left to right: `h` is the height at scale 1; `c` is [light, deep]; `gray` feeds the tinted icon. */
 const SEGMENTS = [
-  { w: 0.95, c: ["#A6EBCA", "#4FB989"], gray: "#9A9A9A" }, // mint, bottom
-  { w: 0.8, c: ["#FAF6EC", "#D9D0BB"], gray: "#CFCFCF" }, // ivory, left
-  { w: 1.35, c: ["#F9E4B2", "#CB9C50"], gray: "#FFFFFF" }, // brass, top
+  { h: 250, c: ["#F4F4F6", "#A9ABB1"], gray: "#9A9A9A" },
+  { h: 400, c: ["#F4F4F6", "#A9ABB1"], gray: "#CFCFCF" },
+  { h: 560, c: ["#F6E3B8", "#C99A55"], gray: "#FFFFFF" },
 ];
 
-/** Ring in the 1024 box at scale 1: radii, the C's opening (degrees either side of 3 o'clock), gaps, corners. */
-const RING = { ri: 178, ro: 344, open: 42, gap: 40, cr: 26 };
+/** Bar width and gap at scale 1; bars are full pills. */
+const BAR = { w: 136, gap: 54 };
 
-const rad = (d) => (d * Math.PI) / 180;
 const fx = (n) => +n.toFixed(2);
-const P = ([x, y]) => `${fx(x)} ${fx(y)}`;
-const polar = (cx, cy, r, a) => [
-  cx + r * Math.cos(rad(a)),
-  cy + r * Math.sin(rad(a)),
-];
 
-/**
- * One donut segment from angle a0 to a1 (degrees, clockwise from 3 o'clock) between radii ri and ro, with
- * parallel-sided gaps (`gap` wide, half taken from each end) and every corner rounded to `cr`.
- */
-function sector(cx, cy, ri, ro, a0, a1, gap, cr) {
-  const d = gap / 2;
-  const roC = ro - cr;
-  const riC = ri + cr;
-  const dO = (Math.asin((d + cr) / roC) * 180) / Math.PI;
-  const dI = (Math.asin((d + cr) / riC) * 180) / Math.PI;
-  // Point where a corner circle touches the straight gap edge at angle a (side +1 = clockwise of the radius).
-  const edge = (a, rho, delta, side) => {
-    const along = rho * Math.cos(rad(delta));
-    return [
-      cx + Math.cos(rad(a)) * along - side * Math.sin(rad(a)) * d,
-      cy + Math.sin(rad(a)) * along + side * Math.cos(rad(a)) * d,
-    ];
-  };
-  const largeO = a1 - a0 - 2 * dO > 180 ? 1 : 0;
-  const largeI = a1 - a0 - 2 * dI > 180 ? 1 : 0;
+function pill(x, y, w, h) {
+  const r = w / 2;
   return [
-    `M ${P(polar(cx, cy, ro, a0 + dO))}`,
-    `A ${fx(ro)} ${fx(ro)} 0 ${largeO} 1 ${P(polar(cx, cy, ro, a1 - dO))}`,
-    `A ${fx(cr)} ${fx(cr)} 0 0 1 ${P(edge(a1, roC, dO, -1))}`,
-    `L ${P(edge(a1, riC, dI, -1))}`,
-    `A ${fx(cr)} ${fx(cr)} 0 0 1 ${P(polar(cx, cy, ri, a1 - dI))}`,
-    `A ${fx(ri)} ${fx(ri)} 0 ${largeI} 0 ${P(polar(cx, cy, ri, a0 + dI))}`,
-    `A ${fx(cr)} ${fx(cr)} 0 0 1 ${P(edge(a0, riC, dI, 1))}`,
-    `L ${P(edge(a0, roC, dO, 1))}`,
-    `A ${fx(cr)} ${fx(cr)} 0 0 1 ${P(polar(cx, cy, ro, a0 + dO))}`,
+    `M ${fx(x)} ${fx(y + r)}`,
+    `A ${fx(r)} ${fx(r)} 0 0 1 ${fx(x + w)} ${fx(y + r)}`,
+    `L ${fx(x + w)} ${fx(y + h - r)}`,
+    `A ${fx(r)} ${fx(r)} 0 0 1 ${fx(x)} ${fx(y + h - r)}`,
     "Z",
   ].join(" ");
 }
 
-/**
- * The ring at `scale` (1 = iOS icon), centred on (512, 512) by its bounding box, nudged left a touch because the
- * open side carries less weight. `gapScale` widens the gaps for tiny renders (favicon).
- */
-function geometry(scale, { gapScale = 1 } = {}) {
-  const { ri, ro, open, gap, cr } = RING;
-  // Bounding box of the ring around its own centre: left edge -ro, right edge at the terminals' outer corners.
-  const right = ro * Math.cos(rad(open));
-  const cx = 512 - ((right - ro) / 2) * scale - 4 * scale;
-  const cy = 512;
-  const start = open;
-  const end = 360 - open;
-  const total = SEGMENTS.reduce((s, x) => s + x.w, 0);
-  let a = start;
-  const segments = SEGMENTS.map((s) => {
-    const a1 = a + ((end - start) * s.w) / total;
-    const d = sector(
-      cx,
-      cy,
-      ri * scale,
-      ro * scale,
-      a,
-      a1,
-      gap * scale * gapScale,
-      cr * scale,
-    );
-    a = a1;
-    return { ...s, d };
+/** The bars at `scale` (1 = iOS icon), centred on (512, 512) by their bounding box. */
+function geometry(scale) {
+  const w = BAR.w * scale;
+  const gap = BAR.gap * scale;
+  const total = SEGMENTS.length * w + (SEGMENTS.length - 1) * gap;
+  const tallest = Math.max(...SEGMENTS.map((s) => s.h)) * scale;
+  const bottom = 512 + tallest / 2;
+  const segments = SEGMENTS.map((s, i) => {
+    const h = s.h * scale;
+    return { ...s, d: pill(512 - total / 2 + i * (w + gap), bottom - h, w, h) };
   });
-  return { cx, cy, ri: ri * scale, ro: ro * scale, scale, segments };
+  return { scale, segments };
 }
 
 const svg = (body, defs = "") =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">${defs ? `\n  <defs>${defs}\n  </defs>` : ""}${body}\n</svg>\n`;
 
 /**
- * Full-colour ring: each segment shaded light to deep across itself, a soft light catching every upward-facing edge
- * (the segment minus itself nudged down, blurred a little), and one soft shadow under the ring.
+ * Full-colour bars: each segment shaded light to deep across itself, a soft light catching every upward-facing edge
+ * (the segment minus itself nudged down, blurred a little), and one soft shadow under the bars.
  * `shadow` is the shadow opacity (0 = none).
  */
 function colourMark(g, { shadow = 0.42, highlight = true } = {}) {
@@ -144,25 +96,25 @@ const sheen = `\n  <rect width="1024" height="1024" fill="url(#sheen)"/>`;
 /** Background colour for app.json's android.adaptiveIcon.backgroundColor (the field's mid tone). */
 export const BACKGROUND = FIELD.mid;
 
-/** iOS / default icon: full-bleed emerald field, colour ring. Opaque. */
+/** iOS / default icon: full-bleed graphite field, colour bars. Opaque. */
 export function appIcon() {
   const m = colourMark(geometry(1));
   return svg(field + m.body + sheen, fieldDefs + m.defs);
 }
 
-/** iOS 18 dark appearance: the colour ring on transparent; the system supplies its dark backdrop. */
+/** iOS 18 dark appearance: the colour bars on transparent; the system supplies its dark backdrop. */
 export function appIconDark() {
   const m = colourMark(geometry(1), { shadow: 0.3 });
   return svg(m.body, m.defs);
 }
 
-/** iOS 18 tinted appearance: grayscale ring on black; the system maps luminance to the user's tint. */
+/** iOS 18 tinted appearance: grayscale bars on black; the system maps luminance to the user's tint. */
 export function appIconTinted() {
   const m = flatMark(geometry(1), { grays: true });
   return svg(`\n  <rect width="1024" height="1024" fill="#000"/>${m.body}`);
 }
 
-/** Android adaptive foreground: transparent, the ring inside the 66dp safe circle (r ≈ 313px of 1024). */
+/** Android adaptive foreground: transparent, the bars inside the 66dp safe circle (r ≈ 313px of 1024). */
 const ANDROID_SCALE = 0.76;
 export function androidForeground() {
   const m = colourMark(geometry(ANDROID_SCALE), { shadow: 0.36 });
@@ -178,9 +130,46 @@ export function androidBackground() {
   return svg(field + sheen, fieldDefs);
 }
 
-/** Web favicon: the ring a little larger with wider gaps and no rim light, so it holds at 16–32px. */
+// Alternate icon: a rupee sign drawn as round-capped strokes in the tallest bar's champagne.
+const RUPEE =
+  "M 336 286 H 690 M 336 412 H 690 M 336 286 H 466 A 126 126 0 0 1 466 538 H 362 L 652 790";
+
+function rupeeMark(scale, { shadow = 0.42, color } = {}) {
+  const t = `translate(${fx(512 * (1 - scale))} ${fx(512 * (1 - scale) - 33 * scale)}) scale(${scale})`;
+  const stroke = color ?? "url(#rupee)";
+  const defs = `
+    <linearGradient id="rupee" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#F6E3B8"/><stop offset="1" stop-color="#C99A55"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="${fx(22 * scale)}" stdDeviation="${fx(28 * scale)}" flood-color="#000" flood-opacity="${shadow}"/></filter>`;
+  const body = `
+  <g transform="${t}"${shadow && !color ? ' filter="url(#shadow)"' : ""}><path d="${RUPEE}" fill="none" stroke="${stroke}" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+  return { defs, body };
+}
+
+export function rupeeIcon() {
+  const m = rupeeMark(1);
+  return svg(field + m.body + sheen, fieldDefs + m.defs);
+}
+
+export function rupeeIconDark() {
+  const m = rupeeMark(1, { shadow: 0.3 });
+  return svg(m.body, m.defs);
+}
+
+export function rupeeIconTinted() {
+  const m = rupeeMark(1, { color: "#fff" });
+  return svg(`\n  <rect width="1024" height="1024" fill="#000"/>${m.body}`, m.defs);
+}
+
+export function rupeeAndroidForeground() {
+  const m = rupeeMark(ANDROID_SCALE, { shadow: 0.36 });
+  return svg(m.body, m.defs);
+}
+
+/** Web favicon: the bars a little larger and no rim light, so they hold at 16–32px. */
 export function favicon() {
-  const m = colourMark(geometry(1.14, { gapScale: 1.25 }), {
+  const m = colourMark(geometry(1.14), {
     shadow: 0.3,
     highlight: false,
   });
