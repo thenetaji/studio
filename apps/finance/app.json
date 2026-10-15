@@ -2,7 +2,7 @@
   "expo": {
     "name": "Finance",
     "slug": "cadence",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "cadence",
@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0C3E30",
+        "backgroundColor": "#121214",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -62,7 +62,24 @@
       ],
       "expo-localization",
       "@react-native-community/datetimepicker",
-      "@studio/config/plugins/with-scene-lifecycle"
+      "@studio/config/plugins/with-scene-lifecycle",
+      [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "Rupee",
+            "ios": {
+              "light": "./assets/images/icon-rupee.png",
+              "dark": "./assets/images/icon-rupee-dark.png",
+              "tinted": "./assets/images/icon-rupee-tinted.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-rupee-foreground.png",
+              "backgroundColor": "#121214"
+            }
+          }
+        ]
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

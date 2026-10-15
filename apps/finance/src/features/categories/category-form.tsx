@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as React from "react";
 import { Platform, View } from "react-native";
 
@@ -115,7 +115,7 @@ export function CategoryForm({ id }: CategoryFormProps) {
 
   return (
     <>
-      <Stack.Screen options={header} />
+      {header}
       <EntryLayout>
         <View
           className="items-center gap-3 pb-2 pt-2"

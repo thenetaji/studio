@@ -1,4 +1,4 @@
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import * as React from "react";
 import { Alert, View } from "react-native";
 
@@ -19,6 +19,7 @@ import {
   useAccountUsage,
   useAccounts,
   useRateLookup,
+  useSetting,
   useSettings,
 } from "@/data/hooks";
 import { ValidationError } from "@/db/errors";
@@ -122,6 +123,18 @@ export function AccountForm({ mode, accountId }: AccountFormProps) {
       "blue",
   );
   const [isDefault, setIsDefault] = React.useState(source?.isDefault ?? false);
+  const [pockets, setPockets] = useSetting("pockets");
+  const pocket = pockets.find((p) => p.accountId === accountId);
+  const [pocketOn, setPocketOn] = React.useState(!!pocket);
+  const [pocketText, setPocketText] = React.useState(() =>
+    pocket
+      ? String(pocket.amount / 10 ** minorDigits(source?.currency ?? "INR"))
+      : "",
+  );
+  const [pocketFrom, setPocketFrom] = React.useState(
+    pocket?.fromAccountId ?? null,
+  );
+  const [fromOpen, setFromOpen] = React.useState(false);
   const [keypadOpen, setKeypadOpen] = React.useState(false);
   const [nameFocused, setNameFocused] = React.useState(false);
   const [currencyOpen, setCurrencyOpen] = React.useState(false);
@@ -147,7 +160,10 @@ export function AccountForm({ mode, accountId }: AccountFormProps) {
     else router.replace("/accounts");
   };
 
-  const disabled = name.trim().length === 0 || needsRate;
+  const pocketMinor = Math.round(Number(pocketText) * 10 ** digits);
+  const pocketValid = Number.isInteger(pocketMinor) && pocketMinor > 0;
+  const disabled =
+    name.trim().length === 0 || needsRate || (pocketOn && !pocketValid);
   const header = useSheetHeader({
     title: mode === "edit" ? "Edit account" : "New account",
     onCancel: close,
@@ -177,15 +193,28 @@ export function AccountForm({ mode, accountId }: AccountFormProps) {
         });
         if (isDefault && !source.isDefault)
           actions.accounts.setDefault(accountId);
-      } else {
-        actions.accounts.create({
-          name,
-          type,
-          currency,
-          openingBalance: signed,
-          color,
-          isDefault,
-        });
+      }
+      const id =
+        mode === "edit" && accountId
+          ? accountId
+          : actions.accounts.create({
+              name,
+              type,
+              currency,
+              openingBalance: signed,
+              color,
+              isDefault,
+            }).id;
+      if (pocketOn || pocket) {
+        const rest = pockets.filter((p) => p.accountId !== id);
+        setPockets(
+          pocketOn
+            ? [
+                ...rest,
+                { accountId: id, amount: pocketMinor, fromAccountId: pocketFrom },
+              ]
+            : rest,
+        );
       }
       if (foreign && rateMinor > 0 && rateMinor / RATE_SCALE !== storedRate)
         actions.fx.setRate(currency, displayCurrency, rateMinor / RATE_SCALE);
@@ -263,7 +292,7 @@ export function AccountForm({ mode, accountId }: AccountFormProps) {
 
   return (
     <>
-      <Stack.Screen options={header} />
+      {header}
       <EntryLayout
         keypad={
           showKeypad ? (
@@ -377,6 +406,46 @@ export function AccountForm({ mode, accountId }: AccountFormProps) {
             <Swatches value={color} onChange={(key) => setColor(key)} />
           </FormRow>
         </ListGroup>
+        <ListGroup
+          footer={
+            pocketOn
+              ? "Home shows what is left, leftover included, with a Refill button that fills in the transfer."
+              : "For an account you top up from another, like Cash from Salary."
+          }
+        >
+          <ListRow
+            label="Pocket money"
+            switchValue={pocketOn}
+            onSwitchChange={setPocketOn}
+          />
+          {pocketOn ? (
+            <FormRow label="Refill amount">
+              <Input
+                variant="inline"
+                value={pocketText}
+                onChangeText={(text) => setPocketText(text.replace(/[^0-9.]/g, ""))}
+                onFocus={() => setNameFocused(true)}
+                onBlur={() => setNameFocused(false)}
+                placeholder={`${currencySymbol(currency)}0`}
+                keyboardType="decimal-pad"
+                returnKeyType="done"
+                maxLength={12}
+                accessibilityLabel="Refill amount"
+                className="h-6 min-h-0 flex-1 py-0 text-right"
+              />
+            </FormRow>
+          ) : null}
+          {pocketOn ? (
+            <ListRow
+              label="Refill from"
+              value={
+                accounts.find((a) => a.id === pocketFrom)?.name ?? "Any account"
+              }
+              chevron
+              onPress={() => setFromOpen(true)}
+            />
+          ) : null}
+        </ListGroup>
         {mode === "edit" && source ? (
           <ListGroup>
             <ListRow
@@ -394,6 +463,16 @@ export function AccountForm({ mode, accountId }: AccountFormProps) {
         selected={currency}
         onSelect={changeCurrency}
         onClose={() => setCurrencyOpen(false)}
+      />
+      <OptionPicker
+        visible={fromOpen}
+        title="Refill from"
+        options={accounts
+          .filter((a) => a.id !== accountId && !a.archivedAt)
+          .map((a) => ({ value: a.id, label: a.name }))}
+        selected={pocketFrom}
+        onSelect={(id) => setPocketFrom(id)}
+        onClose={() => setFromOpen(false)}
       />
       <OptionPicker
         visible={moveOpen}

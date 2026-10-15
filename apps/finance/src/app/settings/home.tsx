@@ -19,6 +19,7 @@ const SECTION_ICONS: Record<
 > = {
   quick_add: { name: "add", color: "purple" },
   stats: { name: "wallet", color: "purple" },
+  pockets: { name: "savings", color: "purple" },
   coming_up: { name: "calendar", color: "purple" },
   heatmap: { name: "grid", color: "purple" },
   top_categories: { name: "tag", color: "purple" },

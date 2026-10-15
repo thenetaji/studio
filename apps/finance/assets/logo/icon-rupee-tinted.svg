@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="rupee" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#F6E3B8"/><stop offset="1" stop-color="#C99A55"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%"><feDropShadow dx="0" dy="22" stdDeviation="28" flood-color="#000" flood-opacity="0.42"/></filter>
+  </defs>
+  <rect width="1024" height="1024" fill="#000"/>
+  <g transform="translate(0 -33) scale(1)"><path d="M 336 286 H 690 M 336 412 H 690 M 336 286 H 466 A 126 126 0 0 1 466 538 H 362 L 652 790" fill="none" stroke="#fff" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/></g>
+</svg>

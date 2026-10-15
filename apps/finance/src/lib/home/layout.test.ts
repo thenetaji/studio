@@ -24,7 +24,10 @@ describe("normalizeHomeLayout", () => {
     expect(layout.map((s) => s.id)).toEqual([
       "recent",
       "stats",
-      ...HOME_SECTION_IDS.filter((id) => id !== "recent" && id !== "stats"),
+      "pockets",
+      ...HOME_SECTION_IDS.filter(
+        (id) => id !== "recent" && id !== "stats" && id !== "pockets",
+      ),
     ]);
     expect(layout[0]).toEqual({ id: "recent", visible: false });
     expect(layout.slice(2).every((s) => s.visible)).toBe(true);

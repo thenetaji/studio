@@ -10,6 +10,7 @@ import {
   useBudgets,
   useHomeSpend,
   useInsights,
+  usePockets,
   useRecentTransactions,
   useSetting,
   useTodayKey,
@@ -18,6 +19,7 @@ import { SpendHeatmap } from "@/features/heatmap/spend-heatmap";
 import { ComingUp } from "@/features/home/coming-up";
 import { useHeroPeriod } from "@/features/home/period-store";
 import { QuickAdd } from "@/features/home/quick-add";
+import { Pockets } from "@/features/home/pockets";
 import { HomeSectionHeader } from "@/features/home/section-header";
 import { SpendHero } from "@/features/home/spend-hero";
 import { StatRow } from "@/features/home/stat-row";
@@ -36,6 +38,7 @@ const STAGGER = { base: 200, step: 55 } as const;
 const SPACING: Record<HomeSectionId, string> = {
   quick_add: "mt-[22px]",
   stats: "mt-5",
+  pockets: "mt-[26px]",
   coming_up: "mt-[26px]",
   heatmap: "mt-[26px]",
   top_categories: "mt-[26px]",
@@ -70,6 +73,7 @@ export default function Home() {
   const insights = useInsights(month, "expense");
   const recent = useRecentTransactions(RECENT_COUNT);
   const [layout] = useSetting("home_layout");
+  const pockets = usePockets();
 
   const decimals = money.showDecimals ? undefined : 0;
   const balance = React.useMemo(
@@ -106,6 +110,14 @@ export default function Home() {
             balanceNegative={balance < 0}
           />
         );
+      case "pockets":
+        return pockets.length > 0 ? (
+          <Pockets
+            pockets={pockets}
+            locale={money.locale}
+            showDecimals={money.showDecimals}
+          />
+        ) : null;
       case "coming_up":
         return (
           <ComingUp

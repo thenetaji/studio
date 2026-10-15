@@ -1,4 +1,4 @@
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import * as React from "react";
 import { Keyboard, View } from "react-native";
 
@@ -248,7 +248,7 @@ export function BudgetForm({ mode, budgetId }: BudgetFormProps) {
 
   return (
     <>
-      <Stack.Screen options={header} />
+      {header}
       <EntryLayout
         keypad={
           showKeypad ? (

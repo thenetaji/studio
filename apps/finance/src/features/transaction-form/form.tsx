@@ -3,7 +3,6 @@ import * as React from "react";
 import {
   InputAccessoryView,
   Keyboard,
-  KeyboardAvoidingView,
   Platform,
   ScrollView,
   View,
@@ -43,6 +42,7 @@ import type { TitleMemoryRow } from "@/db/schema";
 import { CategoryRowView } from "@/features/transaction-form/category-row";
 import { FormChip, Hairline } from "@/features/transaction-form/chips";
 import { ShakeView } from "@/features/transaction-form/shake-view";
+import { useKeyboardInset } from "@/features/entry/use-keyboard-inset";
 import {
   pickReceipt,
   RECEIPT_OPTIONS,
@@ -104,6 +104,8 @@ import { haptic, useTokens } from "@studio/theme";
 export type FormParams = {
   kind?: string;
   accountId?: string;
+  /** Transfer destination, e.g. a pocket being refilled. */
+  toAccountId?: string;
   categoryId?: string;
   duplicateOf?: string;
   /** Quick-add prefill: title, amount in minor units and the currency that amount is in. */
@@ -142,6 +144,7 @@ function TransactionForm({
 }: TransactionFormProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const keyboardInset = useKeyboardInset();
   const { colors, category } = useTokens();
   const actions = useActions();
   const settings = useSettings();
@@ -200,6 +203,17 @@ function TransactionForm({
         Number.isInteger(minor) &&
         minor > 0 &&
         sameCurrency
+      )
+        draft.amount = minor;
+    }
+    // A pocket refill arrives with its amount but no title.
+    if (!source && !rule && !params.title && params.toAccountId) {
+      const minor = Number(params.amount);
+      const account = activeAccounts.find((a) => a.id === draft.accountId);
+      if (
+        Number.isInteger(minor) &&
+        minor > 0 &&
+        (!params.currency || account?.currency === params.currency)
       )
         draft.amount = minor;
     }
@@ -355,13 +369,23 @@ function TransactionForm({
       } else {
         const created = actions.transactions.create(input);
         saveReceipts(created.id, d.receipts, []);
-        if (
-          d.kind === "expense" ||
-          d.kind === "income" ||
-          d.kind === "transfer"
-        )
-          actions.settings.set("last_kind", d.kind);
-        if (d.accountId) actions.settings.set("last_account_id", d.accountId);
+        const intoPocket =
+          d.kind === "transfer" &&
+          settings.pockets.some((p) => p.accountId === d.transferAccountId);
+        if (intoPocket && d.transferAccountId) {
+          // After a refill, the next entry is most likely a spend from the pocket.
+          actions.settings.set("last_kind", "expense");
+          actions.settings.set("last_account_id", d.transferAccountId);
+        } else {
+          if (
+            d.kind === "expense" ||
+            d.kind === "income" ||
+            d.kind === "transfer"
+          )
+            actions.settings.set("last_kind", d.kind);
+          if (d.accountId)
+            actions.settings.set("last_account_id", d.accountId);
+        }
         if (params.ruleId) actions.recurring.skip(params.ruleId);
       }
     } catch (error) {
@@ -689,9 +713,9 @@ function TransactionForm({
         />
       </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      <View
         className="flex-1"
+        style={{ paddingBottom: inputFocus ? keyboardInset : 0 }}
         onLayout={(event) => setAreaHeight(event.nativeEvent.layout.height)}
       >
         {/* No ScrollView: everything fits by design, and a capped, centred readout zone overflowed upward into the
@@ -699,7 +723,7 @@ function TransactionForm({
         <View className="flex-1 pb-3">
           <View
             className="flex-1 justify-center py-2"
-            style={{ minHeight: crossCurrency ? 152 : 96 }}
+            style={{ minHeight: inputFocus ? 56 : crossCurrency ? 152 : 96 }}
           >
             <View style={{ opacity: receivesFocused ? 0.45 : 1 }}>
               <AmountReadout
@@ -1048,7 +1072,7 @@ function TransactionForm({
             />
           </View>
         ) : null}
-      </KeyboardAvoidingView>
+      </View>
 
       {Platform.OS === "ios" ? (
         <InputAccessoryView nativeID={ACCESSORY_ID}>
