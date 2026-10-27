@@ -169,7 +169,7 @@ rain|Rain|Personal|cloud-rain|cloud.rain.fill|cloud-rain,cloud-drizzle,cloud-rai
 other|Other|Personal|dots-three-circle|ellipsis.circle.fill|more-horizontal-circle,circle-ellipsis,menu-dots-circle,more-circle
 home|Home|_UI|house-simple|house|home-01,house,home-2,home
 activity|Activity|_UI|receipt|list.bullet.rectangle.fill|receipt,invoice-01,bill-list,receipt-text
-insights|Insights|_UI|chart-pie-slice|chart.pie.fill,chart.bar.fill|pie-chart,chart-pie,pie-chart-2,pie-chart-01
+insights|Insights|_UI|chart-bar|chart.bar.fill,chart.pie.fill|chart-column-increasing,chart-bar,bar-chart
 budgets|Budgets|_UI|gauge|gauge.with.dots.needle.33percent|dashboard-speed-01,gauge,speedometer-middle,speedometer
 settings|Settings|_UI|gear-six|gearshape,gearshape.fill|settings-01,settings,settings-2
 eye|Eye|_UI|eye|eye|eye,eye-open,view

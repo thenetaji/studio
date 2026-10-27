@@ -137,3 +137,46 @@ export function parseScope(params: InsightsParams): InsightsScope {
     tagId: firstParam(params.tag) || null,
   };
 }
+
+/** What a pushed Insights screen (payees, payee, more) needs to show the same slice as the tab. */
+export interface InsightsContext {
+  period: Period;
+  kind: "expense" | "income";
+  scope: InsightsScope;
+}
+
+/** Route params that carry an `InsightsContext` to a pushed screen. */
+export function contextParams(context: InsightsContext): Record<string, string> {
+  const out: Record<string, string> = {
+    from: context.period.from,
+    to: context.period.to,
+    type: context.period.type,
+    kind: context.kind,
+  };
+  if (context.scope.accountId) out.account = context.scope.accountId;
+  if (context.scope.tagId) out.tag = context.scope.tagId;
+  return out;
+}
+
+/** Reads `contextParams` back; a missing or malformed period falls back to the month containing `today`. */
+export function parseContext(
+  raw: Record<string, string | string[] | undefined>,
+  today: DateKey,
+  settings: PeriodSettings,
+): InsightsContext {
+  const from = firstParam(raw.from);
+  const to = firstParam(raw.to);
+  const type = PERIODS.find((p) => p === firstParam(raw.type));
+  const period: Period =
+    type && from && to && KEY.test(from) && KEY.test(to) && from <= to
+      ? { type, from, to }
+      : periodFor("month", today, settings);
+  return {
+    period,
+    kind: firstParam(raw.kind) === "income" ? "income" : "expense",
+    scope: {
+      accountId: firstParam(raw.account) || null,
+      tagId: firstParam(raw.tag) || null,
+    },
+  };
+}

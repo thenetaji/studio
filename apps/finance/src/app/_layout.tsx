@@ -202,6 +202,9 @@ function Navigator() {
         />
         <Stack.Screen name="category/[id]" options={push("Category")} />
         <Stack.Screen name="categories/[id]" options={sheet("Category")} />
+        <Stack.Screen name="payees" options={push("Payees")} />
+        <Stack.Screen name="payee" options={push("Payee")} />
+        <Stack.Screen name="insights-more" options={push("More insights")} />
         <Stack.Screen name="budget/new" options={sheet("New budget")} />
         <Stack.Screen
           name="budget/categories"

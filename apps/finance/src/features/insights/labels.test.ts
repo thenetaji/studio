@@ -7,7 +7,9 @@ import {
   peakCaption,
   percentText,
   previousLabel,
+  previousName,
   scrubLabel,
+  trendBadge,
   trendLabel,
   weekdayShort,
 } from "./labels";
@@ -118,5 +120,49 @@ describe("flowScrub", () => {
       ),
     ).toBe("Sep · In ₹1.5L · Out ₹57.6K · Net ₹87.4K");
     expect(flowAmount(999900, "INR", "en-IN")).toBe("₹9,999");
+  });
+});
+
+describe("trendBadge and previousName", () => {
+  const money = { currency: "INR", locale: "en-IN" };
+  const base = { average: 410000, spark: [1, 2, 3] };
+  it("marks a fall in spending as good", () => {
+    const badge = trendBadge(
+      { ...base, direction: "down", percent: -12 },
+      "expense",
+      "September",
+      money,
+    );
+    expect(badge).toMatchObject({ text: "12%", arrow: "down", good: true });
+    expect(badge.speech).toBe(
+      "down 12 percent on September, 3 period average ₹4,100",
+    );
+  });
+  it("marks a rise in income as good and handles new and flat", () => {
+    expect(
+      trendBadge({ ...base, direction: "up", percent: 5 }, "income", "x", money)
+        .good,
+    ).toBe(true);
+    expect(
+      trendBadge({ ...base, direction: "new", percent: null }, "expense", "x", money),
+    ).toMatchObject({ text: "New", arrow: null });
+    expect(
+      trendBadge({ ...base, direction: "flat", percent: 0 }, "expense", "x", money)
+        .text,
+    ).toBe("Same");
+  });
+  it("names the previous period", () => {
+    expect(
+      previousName({ type: "month", from: "2026-10-01", to: "2026-10-31" }),
+    ).toBe("September");
+    expect(
+      previousName({ type: "week", from: "2026-10-19", to: "2026-10-25" }),
+    ).toBe("last week");
+    expect(
+      previousName({ type: "year", from: "2026-01-01", to: "2026-12-31" }),
+    ).toBe("2025");
+    expect(
+      previousName({ type: "custom", from: "2026-10-01", to: "2026-10-10" }),
+    ).toBe("the previous 10 days");
   });
 });

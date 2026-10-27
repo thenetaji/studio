@@ -7,13 +7,13 @@ import { useTokens } from "@studio/theme";
 const SF = {
   home: "house.fill",
   activity: "list.bullet.rectangle.fill",
-  insights: "chart.pie.fill",
+  insights: "chart.bar.fill",
   budgets: "gauge.with.dots.needle.33percent",
 } as const;
 const MD = {
   home: "home",
   activity: "receipt_long",
-  insights: "pie_chart",
+  insights: "bar_chart",
   budgets: "speed",
 } as const;
 type TabId = keyof typeof SF;

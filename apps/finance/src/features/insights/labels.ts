@@ -157,3 +157,70 @@ export function flowScrub(
       : monthShort(parseKey(point.key).month);
   return `${when} · In ${flowAmount(point.income, currency, locale)} · Out ${flowAmount(point.spent, currency, locale)} · Net ${flowAmount(point.income - point.spent, currency, locale, "auto")}`;
 }
+
+/** Row badge for a category's trend: arrow, short text, whether it is welcome, and a spoken summary. */
+export function trendBadge(
+  trend: {
+    direction: "up" | "down" | "flat" | "new";
+    percent: number | null;
+    average: number | null;
+    spark: readonly number[];
+  },
+  kind: "expense" | "income",
+  previousName: string,
+  money: { currency: string; locale?: string },
+): {
+  spark: readonly number[];
+  text: string;
+  arrow: "up" | "down" | null;
+  good: boolean;
+  speech: string;
+} {
+  const average =
+    trend.average === null
+      ? ""
+      : `, 3 period average ${formatMoney(trend.average, money.currency, { locale: money.locale, decimals: 0 })}`;
+  const { direction, percent } = trend;
+  if (direction === "new")
+    return {
+      spark: trend.spark,
+      text: "New",
+      arrow: null,
+      good: false,
+      speech: `new since ${previousName}${average}`,
+    };
+  if (direction === "flat" || percent === null)
+    return {
+      spark: trend.spark,
+      text: "Same",
+      arrow: null,
+      good: false,
+      speech: `same as ${previousName}${average}`,
+    };
+  const size = Math.abs(percent);
+  const text = size > 999 ? ">999%" : `${size}%`;
+  return {
+    spark: trend.spark,
+    text,
+    arrow: direction,
+    good: kind === "expense" ? direction === "down" : direction === "up",
+    speech: `${direction} ${size} percent on ${previousName}${average}`,
+  };
+}
+
+/** What the previous period is called in running text: "September", "last week", "2025", "the previous 30 days". */
+export function previousName(period: Period): string {
+  const previous = previousPeriod(period);
+  switch (period.type) {
+    case "week":
+      return "last week";
+    case "month":
+      return parseKey(previous.from).day === 1
+        ? monthName(parseKey(previous.from).month)
+        : "last month";
+    case "year":
+      return String(parseKey(previous.from).year);
+    case "custom":
+      return `the previous ${periodLength(period)} days`;
+  }
+}
