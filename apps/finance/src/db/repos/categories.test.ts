@@ -12,11 +12,15 @@ import { at, categoryId, createTestDb, makeAccounts } from "../test-helpers";
 import { createBudget } from "./budgets";
 import {
   archiveCategory,
+  countCategoryUsage,
   createCategory,
   deleteCategory,
+  deleteUnusedCategory,
   getCategory,
   listCategories,
   reorderCategories,
+  restoreCategory,
+  transactionCountsByCategory,
   updateCategory,
 } from "./categories";
 import { createRule } from "./recurring";
@@ -186,5 +190,92 @@ describe("categories", () => {
       "category_not_found",
     );
     expect(getCategory(db, food)).toBeDefined();
+  });
+
+  describe("usage and unused delete", () => {
+    it("counts transactions, split lines, rules and budget scopes", () => {
+      const db = createTestDb();
+      const { cash } = makeAccounts(db);
+      const food = categoryId(db, "Food & Drink");
+      const groceries = categoryId(db, "Groceries");
+      expect(countCategoryUsage(db, food)).toBe(0);
+
+      createTransaction(db, {
+        kind: "expense",
+        title: "Lunch",
+        amount: 100,
+        accountId: cash.id,
+        categoryId: food,
+        occurredAt: at("2026-10-01"),
+      });
+      createTransaction(db, {
+        kind: "expense",
+        title: "Mixed",
+        amount: 300,
+        accountId: cash.id,
+        occurredAt: at("2026-10-02"),
+        splits: [
+          { categoryId: food, amount: 100 },
+          { categoryId: groceries, amount: 200 },
+        ],
+      });
+      expect(transactionCountsByCategory(db)).toMatchObject({
+        [food]: 2,
+        [groceries]: 1,
+      });
+
+      createRule(db, {
+        kind: "expense",
+        title: "Tiffin",
+        amount: 500,
+        accountId: cash.id,
+        categoryId: groceries,
+        frequency: "monthly",
+        startDate: "2026-10-01",
+      });
+      createBudget(db, {
+        amount: 1000,
+        currency: "INR",
+        period: "monthly",
+        startAnchor: 1,
+        scope: "categories",
+        categoryIds: [groceries],
+      });
+      expect(countCategoryUsage(db, groceries)).toBe(3);
+    });
+
+    it("deletes an unused category and restores it unchanged", () => {
+      const db = createTestDb();
+      const created = createCategory(db, {
+        name: "Pets",
+        kind: "expense",
+        icon: "pawprint.fill",
+        color: "brown",
+        groupName: "Lifestyle",
+      });
+
+      const removed = deleteUnusedCategory(db, created.id);
+      expect(removed).toEqual(created);
+      expect(getCategory(db, created.id)).toBeUndefined();
+
+      restoreCategory(db, removed);
+      expect(getCategory(db, created.id)).toEqual(created);
+    });
+
+    it("refuses to delete a category in use", () => {
+      const db = createTestDb();
+      const { cash } = makeAccounts(db);
+      const food = categoryId(db, "Food & Drink");
+      createTransaction(db, {
+        kind: "expense",
+        title: "Lunch",
+        amount: 100,
+        accountId: cash.id,
+        categoryId: food,
+        occurredAt: at("2026-10-01"),
+      });
+      expect(() => deleteUnusedCategory(db, food)).toThrow(ValidationError);
+      expect(getCategory(db, food)).toBeDefined();
+    });
   });
 });

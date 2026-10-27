@@ -832,6 +832,23 @@ export const flows = [
       await page.locator('[aria-label="Name"]').fill("Pets");
       await page.locator('[aria-label="Save"]:visible').first().tap();
       await expectText(page, "Pets");
+      // Rename it from its row: the editor opens filled in and saves back to the list.
+      await page.locator('[aria-label^="Pets, "]:visible').first().tap();
+      await expectText(page, "Edit category");
+      await page.locator('[aria-label="Name"]').fill("Pet care");
+      await page.locator('[aria-label="Save"]:visible').first().tap();
+      await expectLabel(page, "Pet care, No transactions");
+      await page.locator('[aria-label="Add category"]:visible').tap();
+      await page.locator('[aria-label="Name"]').fill("Pets");
+      await page.locator('[aria-label="Save"]:visible').first().tap();
+      // An unused category goes at once, with Undo; nothing asks where its transactions go.
+      const unused = page.getByText("Pet care", { exact: true }).last();
+      await unused.scrollIntoViewIfNeeded();
+      await swipeLeft(page, unused);
+      await expectText(page, "Undo");
+      await expectNoText(page, "to…");
+      await tapText(page, "Undo");
+      await expectLabel(page, "Pet care, No transactions");
       // The new category is selectable in the add sheet (via the All grid) and saves.
       await goClient(page, "/");
       await addExpense(page, {
@@ -852,7 +869,7 @@ export const flows = [
       const row = page.getByText("Pets", { exact: true }).last();
       await row.scrollIntoViewIfNeeded();
       await swipeLeft(page, row);
-      await expectText(page, "Move transactions to…");
+      await expectText(page, "Move 1 transaction to…");
       await page.getByText("Other", { exact: true }).last().tap();
       await expectNoText(page, "Pets");
       await goClient(page, "/");

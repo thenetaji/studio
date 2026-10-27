@@ -200,6 +200,7 @@ function Navigator() {
           options={{ ...sheet("Edit transaction"), headerShown: false }}
         />
         <Stack.Screen name="category/[id]" options={push("Category")} />
+        <Stack.Screen name="categories/[id]" options={sheet("Category")} />
         <Stack.Screen name="budget/new" options={sheet("New budget")} />
         <Stack.Screen
           name="budget/categories"

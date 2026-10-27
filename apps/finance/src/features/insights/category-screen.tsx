@@ -293,7 +293,7 @@ export default function CategoryScreen() {
               size="sm"
               onPress={() =>
                 router.push({
-                  pathname: "/settings/categories/[id]",
+                  pathname: "/categories/[id]",
                   params: { id },
                 })
               }

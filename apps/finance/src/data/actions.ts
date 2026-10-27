@@ -83,6 +83,8 @@ export function createActions(db: Db) {
       archive: write(categories.archiveCategory),
       reorder: write(categories.reorderCategories),
       delete: write(categories.deleteCategory),
+      deleteUnused: write(categories.deleteUnusedCategory),
+      restore: write(categories.restoreCategory),
     },
     transactions: {
       create: write(transactions.createTransaction),
