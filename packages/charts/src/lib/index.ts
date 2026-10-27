@@ -6,3 +6,4 @@ export * from "./tide";
 export * from "./spend-curve";
 export * from "./sankey";
 export * from "./series";
+export * from "./text-width";

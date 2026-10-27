@@ -1,3 +1,4 @@
+import { textWidth } from "../lib/text-width";
 import {
   Canvas,
   DashPathEffect,
@@ -184,7 +185,7 @@ function BarChart({
                   />
                   {font && g.value > 0 ? (
                     <SkText
-                      x={width - font.getTextWidth(compact(g.value))}
+                      x={width - textWidth(font, compact(g.value))}
                       y={g.y + 4}
                       text={compact(g.value)}
                       font={font}
@@ -244,7 +245,7 @@ function BarChart({
                     const slot = slots[i];
                     if (!slot || d.value <= top || !font) return null;
                     const text = compact(d.value);
-                    const w = font.getTextWidth(text);
+                    const w = textWidth(font, text);
                     const x = Math.min(
                       Math.max(slot.center - w / 2, 0),
                       width - w,
@@ -289,7 +290,7 @@ function BarChart({
                 ? labels.map((label) => {
                     const slot = slots[label.index];
                     if (!slot) return null;
-                    const w = font.getTextWidth(label.text);
+                    const w = textWidth(font, label.text);
                     const x = Math.min(
                       Math.max(slot.center - w / 2, 0),
                       plotWidth - w,

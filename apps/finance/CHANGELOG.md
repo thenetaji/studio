@@ -2,6 +2,16 @@
 
 All notable changes to Finance. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.1] - 2026-10-27
+
+### Changed
+- Titanium is the default look: graphite and warm white in dark mode, a champagne titanium accent, a light-catching edge on every card, and symbols on brushed-metal tiles.
+- Home shows what you spent and earned this month under net worth, in place of "Left this month" and "Safe to spend".
+
+### Fixed
+- The category summary card had no side padding, so its figures touched the edges.
+- Chart end labels and the scrub read-out were clipped at the right edge on iPhone.
+
 ## [0.3.0] - 2026-10-27
 
 ### Added

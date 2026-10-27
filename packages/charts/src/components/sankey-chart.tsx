@@ -1,3 +1,4 @@
+import { textWidth } from "../lib/text-width";
 import {
   Canvas,
   Group,
@@ -68,9 +69,9 @@ type Placed = {
 
 /** Truncates `text` with an ellipsis so it fits `max` pt in `font`. */
 function fit(text: string, font: SkFont, max: number): string {
-  if (font.getTextWidth(text) <= max) return text;
+  if (textWidth(font, text) <= max) return text;
   let out = text;
-  while (out.length > 1 && font.getTextWidth(`${out}…`) > max)
+  while (out.length > 1 && textWidth(font, `${out}…`) > max)
     out = out.slice(0, -1);
   return `${out.trimEnd()}…`;
 }
@@ -202,8 +203,7 @@ function SankeyChart({
   }, [layout, nodes, columns, plotHeight]);
 
   const paths = React.useMemo(
-    () =>
-      (layout?.links ?? []).map((link) => ({ link, path: bandPath(link) })),
+    () => (layout?.links ?? []).map((link) => ({ link, path: bandPath(link) })),
     [layout],
   );
 
@@ -211,8 +211,9 @@ function SankeyChart({
     () => new Map(nodes.map((n) => [n.key, n.color])),
     [nodes],
   );
-  const middle = (placed.find((p) => p.align === "center")?.node.key ??
-    null) as string | null;
+  const middle = (placed.find((p) => p.align === "center")?.node.key ?? null) as
+    | string
+    | null;
   const selected =
     selectedKey !== null &&
     selectedKey !== middle &&
@@ -310,8 +311,8 @@ function SankeyChart({
                       const name = datum.label;
                       const detail = datum.detail;
                       const cx = (node.x0 + node.x1) / 2;
-                      const nw = nameFont.getTextWidth(name);
-                      const dw = detailFont.getTextWidth(detail);
+                      const nw = textWidth(nameFont, name);
+                      const dw = textWidth(detailFont, detail);
                       const clampX = (w: number) =>
                         Math.min(Math.max(cx - w / 2, 0), width - w);
                       return (
@@ -338,7 +339,7 @@ function SankeyChart({
                     const name = fit(datum.label, nameFont, room);
                     const detail = fit(
                       datum.detailShort &&
-                        detailFont.getTextWidth(datum.detail) > room
+                        textWidth(detailFont, datum.detail) > room
                         ? datum.detailShort
                         : datum.detail,
                       detailFont,
@@ -351,7 +352,7 @@ function SankeyChart({
                     return (
                       <Group key={`l-${node.key}`}>
                         <HaloText
-                          x={xOf(nameFont.getTextWidth(name))}
+                          x={xOf(textWidth(nameFont, name))}
                           y={labelY - 2}
                           text={name}
                           font={nameFont}
@@ -359,7 +360,7 @@ function SankeyChart({
                           halo={colors.surface}
                         />
                         <HaloText
-                          x={xOf(detailFont.getTextWidth(detail))}
+                          x={xOf(textWidth(detailFont, detail))}
                           y={labelY + 13}
                           text={detail}
                           font={detailFont}

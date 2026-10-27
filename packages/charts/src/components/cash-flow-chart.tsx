@@ -1,3 +1,4 @@
+import { textWidth } from "../lib/text-width";
 import {
   Canvas,
   Circle,
@@ -194,7 +195,7 @@ function CashFlowChart({
                       />
                       {font ? (
                         <SkText
-                          x={width - font.getTextWidth(g.text)}
+                          x={width - textWidth(font, g.text)}
                           y={g.y + 4}
                           text={g.text}
                           font={font}
@@ -275,7 +276,7 @@ function CashFlowChart({
                     const marks: React.ReactNode[] = [];
                     if (d.income > scale.upTop) {
                       const text = compact(d.income);
-                      const w = font.getTextWidth(text);
+                      const w = textWidth(font, text);
                       const x = Math.min(
                         Math.max(slot.center - w / 2, 0),
                         width - w,
@@ -392,7 +393,7 @@ function CashFlowChart({
                 ? labels.map((label) => {
                     const slot = slots[label.index];
                     if (!slot) return null;
-                    const w = font.getTextWidth(label.text);
+                    const w = textWidth(font, label.text);
                     const x = Math.min(
                       Math.max(slot.center - w / 2, 0),
                       plotWidth - w,
@@ -421,7 +422,12 @@ function CashFlowChart({
                   plotWidth={plotWidth}
                   top={LANE + height + AXIS}
                   title={ratesTitle}
-                  selected={selected ?? (focusIndex !== undefined && focusIndex >= 0 ? focusIndex : count - 1)}
+                  selected={
+                    selected ??
+                    (focusIndex !== undefined && focusIndex >= 0
+                      ? focusIndex
+                      : count - 1)
+                  }
                   font={font}
                 />
               ) : null}
@@ -527,10 +533,7 @@ function RateStrip({
       })}
       {font && valueText && slots[shown] ? (
         <SkText
-          x={Math.min(
-            Math.max(slots[shown]!.center + 8, 0),
-            plotWidth + 4,
-          )}
+          x={Math.min(Math.max(slots[shown]!.center + 8, 0), plotWidth + 4)}
           y={Math.min(Math.max(yOf(value ?? 0) + 4, plotTop + 8), zero + span)}
           text={valueText}
           font={font}

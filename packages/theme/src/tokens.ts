@@ -78,18 +78,18 @@ export const accentPresets: Record<
   // Natural titanium: a warm metallic grey, brighter in dark mode where it is the hero.
   titanium: {
     light: {
-      accent: "#7D766C",
-      accentText: "#635D55",
-      accentSoft: "rgba(125,118,108,0.14)",
+      accent: "#5F584F",
+      accentText: "#5F584F",
+      accentSoft: "rgba(95,88,79,0.1)",
       onAccent: "#FFFFFF",
-      accentDeep: "#6B655C",
+      accentDeep: "#4E4840",
     },
     dark: {
-      accent: "#CFC8BC",
-      accentText: "#CFC8BC",
-      accentSoft: "rgba(207,200,188,0.14)",
-      onAccent: "#141311",
-      accentDeep: "#B3AB9E",
+      accent: "#D9D2C5",
+      accentText: "#D9D2C5",
+      accentSoft: "rgba(217,210,197,0.14)",
+      onAccent: "#121110",
+      accentDeep: "#BDB5A7",
     },
   },
   brass: {
@@ -176,7 +176,7 @@ export const accentPresets: Record<
 };
 
 /** Default accent; `setAccent` re-skins at runtime. global.css `--tint*` mirror this default. */
-export const accentPreset: AccentPresetKey = "ivory";
+export const accentPreset: AccentPresetKey = "titanium";
 
 /** The surface family: every non-accent token. `setPalette` switches it at runtime. */
 export type PaletteKey = "system" | "titanium" | "paper";
@@ -184,7 +184,7 @@ export type PaletteKey = "system" | "titanium" | "paper";
 export type PaletteColors = Omit<SemanticColors, keyof AccentColors>;
 
 /** Default palette; global.css mirrors it. */
-export const palettePreset: PaletteKey = "system";
+export const palettePreset: PaletteKey = "titanium";
 
 export const palettes: Record<PaletteKey, Record<Scheme, PaletteColors>> = {
   // Apple's own apps (Wallet, Health): grouped grey background, white cards, system label greys.
@@ -225,36 +225,36 @@ export const palettes: Record<PaletteKey, Record<Scheme, PaletteColors>> = {
   // Titanium: graphite and brushed-metal greys, made for dark mode first.
   titanium: {
     light: {
-      bg: "#E8E7E4",
-      surface: "#F8F8F6",
+      bg: "#ECEBE8",
+      surface: "#FAFAF8",
       elevated: "#FFFFFF",
-      border: "rgba(40,38,34,0.1)",
-      separator: "rgba(40,38,34,0.14)",
-      text: "#1D1D1F",
-      textSecondary: "#6E6C68",
-      textTertiary: "#A09D97",
+      border: "rgba(40,36,30,0.09)",
+      separator: "rgba(40,36,30,0.12)",
+      text: "#1C1B19",
+      textSecondary: "#6B6862",
+      textTertiary: "#A19D96",
       income: "#2E7D4F",
       expense: "#C4302B",
       warning: "#B9580D",
-      fill: "#DCDAD5",
-      overlay: "#1D1D1F",
-      overlayText: "#F5F5F7",
+      fill: "#E0DEDA",
+      overlay: "#1C1B19",
+      overlayText: "#F4F2EE",
     },
     dark: {
-      bg: "#0B0B0C",
-      surface: "#18181A",
-      elevated: "#232325",
-      border: "rgba(232,226,214,0.08)",
-      separator: "rgba(232,226,214,0.1)",
-      text: "#F5F5F7",
-      textSecondary: "#A3A09A",
-      textTertiary: "#6A6864",
-      income: "#5FD39A",
-      expense: "#FF6961",
-      warning: "#FFB04A",
-      fill: "#26262A",
-      overlay: "#F5F5F7",
-      overlayText: "#1D1D1F",
+      bg: "#0A0A0B",
+      surface: "#161617",
+      elevated: "#1F1F21",
+      border: "rgba(225,218,205,0.08)",
+      separator: "rgba(225,218,205,0.09)",
+      text: "#F4F2EE",
+      textSecondary: "#A8A49C",
+      textTertiary: "#6E6B66",
+      income: "#7FD1A0",
+      expense: "#F07A72",
+      warning: "#E9B25C",
+      fill: "#232325",
+      overlay: "#F4F2EE",
+      overlayText: "#1C1B19",
     },
   },
   // The original warm paper and black.

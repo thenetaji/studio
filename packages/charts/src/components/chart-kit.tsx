@@ -1,3 +1,4 @@
+import { textWidth } from "../lib/text-width";
 import {
   Group,
   RoundedRect,
@@ -83,7 +84,7 @@ export function FloatingLabel({
   const reduced = useReducedMotion();
   const padX = 10;
   const height = 24;
-  const width = font.getTextWidth(text) + padX * 2;
+  const width = textWidth(font, text) + padX * 2;
   const scale = Math.min(1, Math.max(0, totalWidth - LABEL_MARGIN * 2) / width);
   const target = clampLabelX(centerX, width * scale, totalWidth, LABEL_MARGIN);
   // The pill springs to each new bar instead of teleporting.

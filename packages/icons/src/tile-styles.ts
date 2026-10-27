@@ -40,22 +40,28 @@ export function tileSpec(
 ): TileSpec {
   const h = hueOf(color);
   switch (background) {
-    // Mono: no category colour at all. The symbol in ink on a neutral grey tile, as in Apple's own lists.
+    // Mono: no category colour. The symbol on a brushed-metal tile, lit from the top left.
     case "mono":
       return dark
         ? {
-            kind: "plain",
-            iconScale: 0.52,
-            icon: "#F2F2F7",
-            base: "#2C2C2E",
-            rim: "rgba(255,255,255,0.05)",
+            kind: "glass",
+            iconScale: 0.5,
+            icon: "#ECE8E0",
+            face: "linear-gradient(160deg, #3A3A3D 0%, #252527 55%, #1B1B1D 100%)",
+            rimGradient:
+              "linear-gradient(180deg, rgba(255,250,240,0.26), rgba(255,250,240,0.04))",
+            sheen:
+              "linear-gradient(180deg, rgba(255,255,255,0.1), rgba(255,255,255,0))",
           }
         : {
-            kind: "plain",
-            iconScale: 0.52,
-            icon: "#1C1C1E",
-            base: "#EFEFF4",
-            rim: "rgba(0,0,0,0.04)",
+            kind: "glass",
+            iconScale: 0.5,
+            icon: "#3B3732",
+            face: "linear-gradient(160deg, #FFFFFF 0%, #EFEEEB 60%, #E3E1DC 100%)",
+            rimGradient:
+              "linear-gradient(180deg, rgba(255,255,255,1), rgba(40,36,30,0.12))",
+            sheen:
+              "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0))",
           };
     // The symbol in its colour on a faint wash of the same colour.
     case "soft":

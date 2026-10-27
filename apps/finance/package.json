@@ -1,7 +1,7 @@
 {
   "name": "finance",
   "main": "expo-router/entry",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "dependencies": {
     "@expo/ui": "~57.0.21",
     "@expo/vector-icons": "^15.1.1",

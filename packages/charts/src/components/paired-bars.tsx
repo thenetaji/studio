@@ -1,3 +1,4 @@
+import { textWidth } from "../lib/text-width";
 import {
   Canvas,
   Group,
@@ -166,7 +167,7 @@ function PairedBars({
                   />
                   {font && g.value > 0 ? (
                     <SkText
-                      x={width - font.getTextWidth(compact(g.value))}
+                      x={width - textWidth(font, compact(g.value))}
                       y={g.y + 4}
                       text={compact(g.value)}
                       font={font}
@@ -215,7 +216,7 @@ function PairedBars({
                         PAIR_GAP / 2 +
                         j * (barWidth + PAIR_GAP);
                       const text = compact(value);
-                      const w = font.getTextWidth(text);
+                      const w = textWidth(font, text);
                       const x = Math.min(
                         Math.max(left + barWidth / 2 - w / 2, 0),
                         width - w,
@@ -247,7 +248,7 @@ function PairedBars({
                 : null}
               {font
                 ? labels.map((label) => {
-                    const w = font.getTextWidth(label.text);
+                    const w = textWidth(font, label.text);
                     return (
                       <SkText
                         key={label.index}

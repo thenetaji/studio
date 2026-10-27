@@ -1,3 +1,4 @@
+import { textWidth } from "../lib/text-width";
 import {
   Canvas,
   Circle,
@@ -170,7 +171,7 @@ function SpendCurve({
 
   const refEnd = geo.reference[geo.reference.length - 1];
   const refText = referenceLabel && font && refEnd ? referenceLabel : "";
-  const refTextWidth = refText && font ? font.getTextWidth(refText) : 0;
+  const refTextWidth = refText && font ? textWidth(font, refText) : 0;
   const refTextY = refEnd ? Math.max(refEnd[1] - 9, LANE + 10) : 0;
   const collides =
     !refText ||
@@ -271,7 +272,7 @@ function SpendCurve({
               ) : null}
               {font && endLabel ? (
                 <SkText
-                  x={width - font.getTextWidth(endLabel)}
+                  x={width - textWidth(font, endLabel)}
                   y={baseline + 16}
                   text={endLabel}
                   font={font}

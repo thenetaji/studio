@@ -1,3 +1,4 @@
+import { textWidth } from "../lib/text-width";
 import {
   Canvas,
   Circle,
@@ -68,7 +69,11 @@ const LANE = 30;
 const AXIS = 24;
 const GUTTER = 48;
 
-function smoothThrough(b: ReturnType<typeof Skia.PathBuilder.Make>, pts: readonly Pt[], move: boolean) {
+function smoothThrough(
+  b: ReturnType<typeof Skia.PathBuilder.Make>,
+  pts: readonly Pt[],
+  move: boolean,
+) {
   if (pts.length === 0) return;
   if (move) b.moveTo(pts[0]![0], pts[0]![1]);
   else b.lineTo(pts[0]![0], pts[0]![1]);
@@ -110,7 +115,9 @@ function AreaStackChart({
     const lo = stacked ? stack.min : Math.min(0, ...total);
     const hi = stacked ? stack.max : Math.max(0, ...total);
     const range =
-      count === 0 ? { lo: 0, hi: 0, ticks: [] as number[] } : niceRange(lo, hi, 3);
+      count === 0
+        ? { lo: 0, hi: 0, ticks: [] as number[] }
+        : niceRange(lo, hi, 3);
     const yAt = (v: number) => rangeToY(v, range.lo, range.hi, top, baseline);
     const xAt = (i: number) => pointX(i, 0, plotWidth, count);
     const totalPts: Pt[] = total.map((v, i) => [xAt(i), yAt(v)] as const);
@@ -149,9 +156,7 @@ function AreaStackChart({
       bands,
       stackTop: stack.bands.length
         ? total.map((_, i) =>
-            Math.max(
-              ...stack.bands.map((b) => Math.max(b.upper[i] ?? 0, 0)),
-            ),
+            Math.max(...stack.bands.map((b) => Math.max(b.upper[i] ?? 0, 0))),
           )
         : [],
     };
@@ -181,7 +186,7 @@ function AreaStackChart({
     const out: { index: number; text: string; x: number }[] = [];
     let right = -Infinity;
     for (const label of labels) {
-      const w = font.getTextWidth(label.text);
+      const w = textWidth(font, label.text);
       const x = Math.min(
         Math.max(geometry.xAt(label.index) - w / 2, 0),
         plotWidth - w,
@@ -198,7 +203,12 @@ function AreaStackChart({
       onLayout={onLayout}
       style={{ height: totalHeight }}
       accessibilityLabel={accessibilityLabel}
-      {...adjustableProps(count, selectedIndex, onSelect, text || accessibilityLabel)}
+      {...adjustableProps(
+        count,
+        selectedIndex,
+        onSelect,
+        text || accessibilityLabel,
+      )}
     >
       {width > 0 ? (
         <GestureDetector gesture={gesture}>
@@ -221,7 +231,7 @@ function AreaStackChart({
                     />
                     {font ? (
                       <SkText
-                        x={width - font.getTextWidth(label)}
+                        x={width - textWidth(font, label)}
                         y={y + 4}
                         text={label}
                         font={font}
@@ -270,8 +280,18 @@ function AreaStackChart({
                   />
                   {last ? (
                     <>
-                      <Circle cx={last[0]} cy={last[1]} r={5.5} color={colors.surface} />
-                      <Circle cx={last[0]} cy={last[1]} r={3.5} color={colors.accent} />
+                      <Circle
+                        cx={last[0]}
+                        cy={last[1]}
+                        r={5.5}
+                        color={colors.surface}
+                      />
+                      <Circle
+                        cx={last[0]}
+                        cy={last[1]}
+                        r={3.5}
+                        color={colors.accent}
+                      />
                     </>
                   ) : null}
                 </>

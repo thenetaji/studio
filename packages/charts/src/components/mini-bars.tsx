@@ -1,3 +1,4 @@
+import { textWidth } from "../lib/text-width";
 import {
   Canvas,
   Group,
@@ -149,7 +150,7 @@ function MiniBars({
                     return (
                       <SkText
                         key={d.key}
-                        x={slot.center - f.getTextWidth(d.label) / 2}
+                        x={slot.center - textWidth(f, d.label) / 2}
                         y={baseline + 17}
                         text={d.label}
                         font={f}
@@ -167,7 +168,7 @@ function MiniBars({
                     const slot = slots[i];
                     if (!slot || d.value <= top) return null;
                     const text = formatValue(i);
-                    const w = labelFont.getTextWidth(text);
+                    const w = textWidth(labelFont, text);
                     const x = Math.min(
                       Math.max(slot.center - w / 2, 0),
                       width - w,

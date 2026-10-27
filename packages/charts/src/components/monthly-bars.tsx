@@ -1,3 +1,4 @@
+import { textWidth } from "../lib/text-width";
 import {
   Canvas,
   Group,
@@ -275,7 +276,7 @@ function MonthlyBars({
                 ? labels.map((label) => {
                     const slot = slots[label.index];
                     if (!slot) return null;
-                    const w = font.getTextWidth(label.text);
+                    const w = textWidth(font, label.text);
                     const lit = shown === label.index;
                     return (
                       <SkText
