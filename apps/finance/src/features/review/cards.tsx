@@ -32,7 +32,6 @@ import {
   Ring,
   ShareStack,
   YearCell,
-  useNeutralMark,
 } from "@/features/report/marks";
 import type { ReportMoney } from "@/features/report/money";
 import { asColor } from "@/features/report/sections";
@@ -221,7 +220,6 @@ function Intro({ review, still }: CardProps) {
 
 function Flow({ review, money, still }: CardProps) {
   const { colors } = useTokens();
-  const neutral = useNeutralMark();
   const max = Math.max(review.spent, review.earned, 1);
   const block = (
     index: number,
@@ -261,7 +259,7 @@ function Flow({ review, money, still }: CardProps) {
         1,
         "Earned",
         review.earned,
-        neutral,
+        colors.income,
         review.earned > 0 ? "income" : undefined,
       )}
       {block(2, "Spent", review.spent, colors.accent)}

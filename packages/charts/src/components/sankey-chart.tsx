@@ -53,7 +53,7 @@ export type SankeyChartProps = {
 const NODE_WIDTH = 7;
 const NODE_GAP = 28;
 const LABEL_GAP = 9;
-const LABEL_BLOCK = 30;
+const LABEL_BLOCK = 38;
 /** Room above the middle node for its two-line label. */
 const HUB_LABEL = 36;
 const PAD = 6;

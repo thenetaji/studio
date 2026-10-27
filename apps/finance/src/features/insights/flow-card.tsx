@@ -65,7 +65,7 @@ const FlowCard = React.memo(function FlowCard({
   const { colors, category } = useTokens();
   const [selected, setSelected] = React.useState<string | null>(null);
   const flow = React.useMemo(
-    () => moneyFlow(rows(income), rows(spending), { sources: 3, targets: 5 }),
+    () => moneyFlow(rows(income), rows(spending), { sources: 3, targets: 4 }),
     [income, spending],
   );
   const money = React.useCallback(
