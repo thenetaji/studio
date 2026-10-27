@@ -91,6 +91,23 @@
           "minOSVersion": "16.4"
         }
       ]
+    },
+    {
+      "name": "Finance",
+      "bundleIdentifier": "com.thenetaji.cadence",
+      "developerName": "thenetaji",
+      "localizedDescription": "Finance",
+      "iconURL": "https://raw.githubusercontent.com/thenetaji/studio/main/apps/finance/assets/images/icon.png",
+      "versions": [
+        {
+          "version": "0.3.0",
+          "buildVersion": "300",
+          "date": "2026-10-27",
+          "downloadURL": "https://github.com/thenetaji/studio/releases/download/finance-v0.3.0/Finance-0.3.0.ipa",
+          "size": 20437666,
+          "minOSVersion": "16.4"
+        }
+      ]
     }
   ],
   "news": []
