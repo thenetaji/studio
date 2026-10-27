@@ -233,6 +233,17 @@ function Navigator() {
             sheetExpandsWhenScrolledToEdge: true,
           }}
         />
+        <Stack.Screen name="report/[month]" options={push("Monthly report")} />
+        <Stack.Screen
+          name="review/[year]"
+          options={{
+            presentation: "fullScreenModal",
+            animation: "fade",
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen name="calendar" options={push("Calendar")} />
+        <Stack.Screen name="share-image" options={sheet("Share")} />
         <Stack.Screen name="settings" options={{ presentation: "modal" }} />
       </Stack.Protected>
       <Stack.Screen name="dev/gallery" />

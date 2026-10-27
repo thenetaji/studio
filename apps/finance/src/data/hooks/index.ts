@@ -40,3 +40,4 @@ export * from "./useBalanceHistory";
 export * from "./usePockets";
 export * from "./useInsightLines";
 export * from "./useBalanceMovements";
+export * from "./useReports";
