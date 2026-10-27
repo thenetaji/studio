@@ -1,23 +1,17 @@
 import {
   budgetPeriodFor,
-  budgetSpent,
+  budgetProgress,
   getBudget,
-  type Budget,
+  type BudgetSpent,
 } from "@/db/repos/budgets";
 import { getRateLookup } from "@/db/repos/fx";
 import { spendLines } from "@/db/repos/reports";
-import type { Period } from "@studio/dates";
 import { paceSeries, type PacePoint } from "@/lib/insights";
 import { useLiveData } from "@/data/use-live-data";
 import { useTodayKey } from "./useTodayKey";
 
-export interface BudgetDetail {
-  budget: Budget;
-  period: Period;
-  /** In the budget's currency. */
-  spent: number;
-  remaining: number;
-  /** Cumulative spend per day against an even pace, in the budget's currency. */
+export interface BudgetDetail extends BudgetSpent {
+  /** Cumulative spend per day against an even pace to the available amount, in the budget's currency. */
   pace: PacePoint[];
 }
 
@@ -35,13 +29,14 @@ export function useBudgetDetail(
       "transactions",
       "transaction_splits",
       "fx_rates",
+      "recurring_rules",
     ],
     `${id ?? ""}:${key}:${today}`,
     (db) => {
       const budget = id ? getBudget(db, id) : undefined;
       if (!budget) return undefined;
       const period = budgetPeriodFor(budget, key);
-      const spent = budgetSpent(db, budget, period);
+      const progress = budgetProgress(db, budget, period, today);
       const lines = spendLines(db, period);
       const ctx = {
         displayCurrency: budget.currency,
@@ -52,11 +47,15 @@ export function useBudgetDetail(
         (line.categoryId !== null &&
           budget.categoryIds.includes(line.categoryId));
       return {
-        budget,
-        period,
-        spent,
-        remaining: budget.amount - spent,
-        pace: paceSeries(lines, period, budget.amount, today, ctx, inScope),
+        ...progress,
+        pace: paceSeries(
+          lines,
+          period,
+          Math.max(0, progress.available),
+          today,
+          ctx,
+          inScope,
+        ),
       };
     },
   );

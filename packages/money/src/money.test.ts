@@ -225,7 +225,7 @@ describe("masking", () => {
     ).toBe("₹1,240.00");
     expect(
       formatMoneyForSpeech(100, "USD", { locale: maskLocale("en-US", true) }),
-    ).toBe("amount hidden");
+    ).toBe("Hidden");
   });
   it("masks an already formatted string", () => {
     expect(maskMoney("−₹1,24,000.50")).toBe("−₹••••");

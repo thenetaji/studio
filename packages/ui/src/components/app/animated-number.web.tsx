@@ -1,4 +1,5 @@
 import { Text } from "../ui/text";
+import { HIDDEN_LABEL, isMaskedText } from "./amount-privacy";
 
 import type { AnimatedNumberProps } from "./animated-number";
 
@@ -20,7 +21,9 @@ function AnimatedNumber({
       style={color ? { color } : undefined}
       numberOfLines={1}
       adjustsFontSizeToFit={fit}
-      accessibilityLabel={accessibilityLabel}
+      accessibilityLabel={
+        isMaskedText(value) ? HIDDEN_LABEL : accessibilityLabel
+      }
       className={className}
     >
       {value}

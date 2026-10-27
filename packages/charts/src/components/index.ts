@@ -12,3 +12,4 @@ export * from "./tide-bars";
 export * from "./tide-chart";
 export * from "./trend-line";
 export * from "./stacked-bars";
+export * from "./spend-curve";

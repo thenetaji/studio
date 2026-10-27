@@ -24,6 +24,7 @@ import { haptic, useTokens } from "@studio/theme";
 
 import { BudgetCard } from "./budget-card";
 import { toBudgetView } from "./model";
+import { paceColor } from "./pace-status";
 import { PeriodStepper } from "./period-stepper";
 
 function stepFrom(base: Period, offset: number): Period {
@@ -37,7 +38,7 @@ function stepFrom(base: Period, offset: number): Period {
 export default function BudgetDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { colors, category } = useTokens();
+  const { colors } = useTokens();
   const money = useMoneyContext();
   const today = useTodayKey();
   const categories = useCategories();
@@ -87,7 +88,7 @@ export default function BudgetDetailScreen() {
   const { budget } = detail;
   const isCurrent = offset === 0;
   const view = toBudgetView(
-    { budget, period, spent: detail.spent, remaining: detail.remaining },
+    detail,
     {
       locale: money.locale,
       showDecimals: money.showDecimals,
@@ -105,15 +106,11 @@ export default function BudgetDetailScreen() {
         }))
       : [];
   const tint =
-    view.status === "over"
-      ? colors.expense
-      : view.scope === "categories"
-        ? category[view.color]
-        : undefined;
+    view.status === "on_track" ? undefined : paceColor(view.status, colors);
   const point = selected !== null ? detail.pace[selected] : undefined;
   const chartLabel = point
     ? paceLabel(selected ?? 0, point, budget.currency, money.locale)
-    : `Spending pace, ${formatMoneyForSpeech(detail.spent, budget.currency, { sign: "none" })} of ${formatMoneyForSpeech(budget.amount, budget.currency, { sign: "none" })}`;
+    : `Spending pace, ${formatMoneyForSpeech(detail.spent, budget.currency, { sign: "none", locale: money.locale })} of ${formatMoneyForSpeech(detail.available, budget.currency, { sign: "none", locale: money.locale })}`;
 
   const header = (
     <View className="gap-4 pt-2">
@@ -154,7 +151,7 @@ export default function BudgetDetailScreen() {
       <Text
         variant="headline"
         accessibilityRole="header"
-        className="-mb-2 px-4 pt-2"
+        className="px-4 pb-1 pt-2"
       >
         {scoped.length > 0
           ? `${scoped.length} ${scoped.length === 1 ? "transaction" : "transactions"}`

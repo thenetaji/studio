@@ -12,6 +12,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { Text, type TextTone } from "../ui/text";
+import { HIDDEN_LABEL, isMaskedText } from "./amount-privacy";
 import { typeScale, type TypeVariant } from "@studio/theme";
 
 import {
@@ -207,7 +208,9 @@ function AnimatedNumber({
     <View
       onLayout={onOuter}
       accessible
-      accessibilityLabel={accessibilityLabel ?? value}
+      accessibilityLabel={
+        isMaskedText(value) ? HIDDEN_LABEL : (accessibilityLabel ?? value)
+      }
       importantForAccessibility="yes"
       className={className}
       style={{ overflow: fit ? "hidden" : "visible", flexShrink: 1 }}

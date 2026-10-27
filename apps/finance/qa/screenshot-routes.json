@@ -40,6 +40,8 @@
   {"name": "activity-filters-sheet", "path": "/activity-filters?seed=demo"},
   {"name": "budget-detail", "path": "/budget/demo-budget-food?seed=demo", "waitFor": "transaction"},
   {"name": "budget-detail-overall", "path": "/budget/demo-budget-overall?seed=demo", "waitFor": "transaction"},
+  {"name": "budget-detail-rollover", "path": "/budget/demo-budget-groceries?seed=demo", "waitFor": "transaction"},
+  {"name": "budgets-hidden", "path": "/budgets?seed=demo&hide=1"},
   {"name": "budget-new", "path": "/budget/new?seed=demo"},
   {"name": "budget-edit", "path": "/budget/demo-budget-shopping/edit?seed=demo"},
   {"name": "recurring", "path": "/recurring?seed=demo"},

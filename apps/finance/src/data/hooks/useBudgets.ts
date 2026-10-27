@@ -13,9 +13,10 @@ export function useBudgets(ref?: string): BudgetSpent[] {
       "transactions",
       "transaction_splits",
       "fx_rates",
+      "recurring_rules",
     ],
-    key,
-    (db) => listBudgetProgress(db, key),
+    `${key}:${today}`,
+    (db) => listBudgetProgress(db, key, today),
   );
 }
 
