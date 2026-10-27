@@ -193,7 +193,7 @@ export function formatMoneyForSpeech(
   currency: string,
   options: { sign?: SignMode; locale?: string } = {},
 ): string {
-  if (isMaskedLocale(options.locale)) return "amount hidden";
+  if (isMaskedLocale(options.locale)) return "Hidden";
   const code = normalizeCurrency(currency);
   const info = getCurrency(code);
   const digits = minorDigits(code);

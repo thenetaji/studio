@@ -124,7 +124,7 @@ export async function rescheduleAll(
     budgets: listBudgetProgress(db, toDateKey(now)).map((p) => ({
       budgetId: p.budget.id,
       name: p.budget.name,
-      amount: p.budget.amount,
+      amount: p.available,
       spent: p.spent,
       currency: p.budget.currency,
       periodFrom: p.period.from,

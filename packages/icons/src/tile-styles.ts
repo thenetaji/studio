@@ -1,6 +1,12 @@
 import { clear, hsl, hueOf } from "./color";
 import type { IconBackground } from "./types";
 
+/** `#RRGGBB` at `alpha`. */
+const tint = (hex: string, alpha: number) => {
+  const h = hex.replace("#", "");
+  return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${alpha})`;
+};
+
 export type TileSpec = {
   kind: "none" | "plain" | "glass";
   /** Icon size as a fraction of the tile footprint. */
@@ -34,6 +40,41 @@ export function tileSpec(
 ): TileSpec {
   const h = hueOf(color);
   switch (background) {
+    // Mono: no category colour at all. The symbol in ink on a neutral grey tile, as in Apple's own lists.
+    case "mono":
+      return dark
+        ? {
+            kind: "plain",
+            iconScale: 0.52,
+            icon: "#F2F2F7",
+            base: "#2C2C2E",
+            rim: "rgba(255,255,255,0.05)",
+          }
+        : {
+            kind: "plain",
+            iconScale: 0.52,
+            icon: "#1C1C1E",
+            base: "#EFEFF4",
+            rim: "rgba(0,0,0,0.04)",
+          };
+    // The symbol in its colour on a faint wash of the same colour.
+    case "soft":
+      return {
+        kind: "plain",
+        iconScale: 0.54,
+        icon: color,
+        base: tint(color, dark ? 0.2 : 0.13),
+        rim: "transparent",
+      };
+    // iOS Settings: the category colour as a solid continuous-corner square, a white symbol on top.
+    case "solid":
+      return {
+        kind: "plain",
+        iconScale: 0.58,
+        icon: "#FFFFFF",
+        base: color,
+        rim: dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+      };
     case "graphite-glyph":
       return dark
         ? {

@@ -1,16 +1,25 @@
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import * as React from "react";
-import { ScrollView } from "react-native";
+import { ScrollView, View } from "react-native";
 
-import { ListGroup, ListRow } from "@studio/ui";
-import { OptionPicker, type Option } from "@studio/ui";
-import { useAccounts, useSetting } from "@/data/hooks";
-import { ICON_STYLE_LABELS } from "@studio/icons";
+import {
+  Card,
+  ListGroup,
+  ListRow,
+  OptionPicker,
+  Pressable,
+  Text,
+  type Option,
+} from "@studio/ui";
+import { useAccounts, useEntryCount, useSetting } from "@/data/hooks";
+import { AppIcon } from "@studio/icons";
+import { pressScale, useTokens } from "@studio/theme";
 import { ordinal } from "@/features/budgets/logic";
 import { moneyLocale } from "@/features/transactions/use-money-context";
 import { formatMoney } from "@studio/money";
-import { Text } from "@studio/ui";
 import Constants from "expo-constants";
+import { APP_NAME } from "@/constants/app";
 import { isDefaultHomeLayout } from "@/lib/home/layout";
 
 type Picker = "week" | "month" | "account" | null;
@@ -25,6 +34,59 @@ const monthOptions: readonly Option<number>[] = Array.from(
   (_, i) => ({ value: i + 1, label: ordinal(i + 1) }),
 );
 
+const THEME_LABELS = { system: "Auto", light: "Light", dark: "Dark" };
+const PALETTE_LABELS = {
+  system: "System",
+  titanium: "Titanium",
+  paper: "Paper",
+};
+
+const plural = (n: number, one: string, many: string) =>
+  `${n.toLocaleString()} ${n === 1 ? one : many}`;
+
+/** The card at the top, like the account card in iOS Settings: what the app holds, at a glance. */
+function SummaryCard({ onPress }: { onPress: () => void }) {
+  const { colors } = useTokens();
+  const accounts = useAccounts();
+  const entries = useEntryCount();
+  const detail = [
+    plural(entries, "entry", "entries"),
+    plural(accounts.length, "account", "accounts"),
+  ].join(" · ");
+  return (
+    <View className="px-4">
+      <Pressable
+        role="button"
+        accessibilityLabel={`${APP_NAME}, ${detail}`}
+        scale={pressScale.row}
+        onPress={onPress}
+      >
+        <Card className="flex-row items-center gap-4 px-4 py-4">
+          <Image
+            source={require("../../../assets/images/icon.png")}
+            style={{
+              width: 60,
+              height: 60,
+              borderRadius: 14,
+            }}
+            accessibilityIgnoresInvertColors
+          />
+          <View className="min-w-0 flex-1 gap-0.5">
+            <Text variant="headline">{APP_NAME}</Text>
+            <Text variant="footnote" tone="secondary" numberOfLines={2}>
+              {detail}
+            </Text>
+            <Text variant="footnote" tone="tertiary">
+              On this iPhone only
+            </Text>
+          </View>
+          <AppIcon name="chevron.right" size={13} color={colors.textTertiary} />
+        </Card>
+      </Pressable>
+    </View>
+  );
+}
+
 export default function Settings() {
   const router = useRouter();
   const accounts = useAccounts();
@@ -34,7 +96,7 @@ export default function Settings() {
   const [defaultAccountId, setDefaultAccountId] =
     useSetting("default_account_id");
   const [theme] = useSetting("theme");
-  const [iconStyle] = useSetting("icon_style");
+  const [palette] = useSetting("palette");
   const [haptics, setHaptics] = useSetting("haptics");
   const [showDecimals, setShowDecimals] = useSetting("show_decimals");
   const [lockEnabled] = useSetting("lock_enabled");
@@ -48,34 +110,65 @@ export default function Settings() {
     () => accounts.map((a) => ({ value: a.id, label: a.name })),
     [accounts],
   );
+  const privacy = [lockEnabled && "Face ID", hideAmounts && "Hidden"]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <ScrollView
       className="flex-1 bg-bg"
       contentInsetAdjustmentBehavior="automatic"
-      contentContainerClassName="gap-6 py-4 pb-12"
+      contentContainerClassName="gap-7 py-4 pb-12"
     >
-      <ListGroup>
+      <SummaryCard onPress={() => router.push("/settings/about")} />
+
+      <ListGroup header="Money">
         <ListRow
-          label="Display currency"
-          icon={{ name: "dollarsign.circle.fill", color: "blue" }}
+          label="Accounts"
+          icon={{ name: "building.columns.fill", color: "blue" }}
+          value={accounts.length > 0 ? String(accounts.length) : undefined}
+          chevron
+          onPress={() => router.push("/accounts")}
+        />
+        <ListRow
+          label="Categories"
+          icon={{ name: "tag.fill", color: "orange" }}
+          chevron
+          onPress={() => router.push("/settings/categories")}
+        />
+        <ListRow
+          label="Recurring"
+          icon={{ name: "repeat", color: "green" }}
+          chevron
+          onPress={() => router.push("/recurring")}
+        />
+        <ListRow
+          label="Subscriptions"
+          icon={{ name: "subscriptions", color: "pink" }}
+          chevron
+          onPress={() => router.push("/subscriptions")}
+        />
+        <ListRow
+          label="Tags"
+          icon={{ name: "tag", color: "indigo" }}
+          chevron
+          onPress={() => router.push("/tags")}
+        />
+        <ListRow
+          label="People"
+          icon={{ name: "loans", color: "teal" }}
+          chevron
+          onPress={() => router.push("/people")}
+        />
+      </ListGroup>
+
+      <ListGroup header="Preferences">
+        <ListRow
+          label="Currency"
+          icon={{ name: "dollarsign.circle.fill", color: "green" }}
           value={displayCurrency}
           chevron
           onPress={() => router.push("/settings/currency")}
-        />
-        <ListRow
-          label="Week starts on"
-          icon={{ name: "calendar", color: "blue" }}
-          value={weekStart === 7 ? "Sunday" : "Monday"}
-          chevron
-          onPress={() => setPicker("week")}
-        />
-        <ListRow
-          label="Month starts on"
-          icon={{ name: "calendar", color: "blue" }}
-          value={ordinal(monthStart)}
-          chevron
-          onPress={() => setPicker("month")}
         />
         <ListRow
           label="Default account"
@@ -85,45 +178,22 @@ export default function Settings() {
           onPress={() => setPicker("account")}
         />
         <ListRow
-          label="Reminders"
-          icon={{ name: "bell", color: "blue" }}
+          label="Week starts on"
+          icon={{ name: "calendar", color: "red" }}
+          value={weekStart === 7 ? "Sunday" : "Monday"}
           chevron
-          onPress={() => router.push("/settings/reminders")}
-        />
-      </ListGroup>
-      <ListGroup>
-        <ListRow
-          label="Theme"
-          icon={{ name: "paintbrush.fill", color: "purple" }}
-          value={
-            theme === "system" ? "System" : theme === "light" ? "Light" : "Dark"
-          }
-          chevron
-          onPress={() => router.push("/settings/appearance")}
+          onPress={() => setPicker("week")}
         />
         <ListRow
-          label="Icons"
-          icon={{ name: "grid", color: "purple" }}
-          value={ICON_STYLE_LABELS[iconStyle].label}
+          label="Month starts on"
+          icon={{ name: "calendar", color: "red" }}
+          value={ordinal(monthStart)}
           chevron
-          onPress={() => router.push("/settings/appearance")}
-        />
-        <ListRow
-          label="Home"
-          icon={{ name: "home", color: "purple" }}
-          value={homeSummary}
-          chevron
-          onPress={() => router.push("/settings/home")}
-        />
-        <ListRow
-          label="Haptics"
-          icon={{ name: "iphone", color: "purple" }}
-          switchValue={haptics}
-          onSwitchChange={setHaptics}
+          onPress={() => setPicker("month")}
         />
         <ListRow
           label="Show decimals"
-          icon={{ name: "percent", color: "purple" }}
+          icon={{ name: "percent", color: "gray" }}
           value={formatMoney(124000, displayCurrency, {
             locale: moneyLocale(displayCurrency),
             decimals: showDecimals ? undefined : 0,
@@ -132,65 +202,61 @@ export default function Settings() {
           onSwitchChange={setShowDecimals}
         />
       </ListGroup>
-      <ListGroup>
+
+      <ListGroup header="Appearance">
+        <ListRow
+          label="Appearance"
+          icon={{ name: "paintbrush.fill", color: "purple" }}
+          value={`${PALETTE_LABELS[palette]} · ${THEME_LABELS[theme]}`}
+          chevron
+          onPress={() => router.push("/settings/appearance")}
+        />
+        <ListRow
+          label="Home screen"
+          icon={{ name: "home", color: "indigo" }}
+          value={homeSummary}
+          chevron
+          onPress={() => router.push("/settings/home")}
+        />
+        <ListRow
+          label="Haptics"
+          icon={{ name: "iphone", color: "gray" }}
+          switchValue={haptics}
+          onSwitchChange={setHaptics}
+        />
+      </ListGroup>
+
+      <ListGroup header="Privacy and alerts">
         <ListRow
           label="Privacy"
-          icon={{ name: "lock", color: "green" }}
-          value={lockEnabled || hideAmounts ? "On" : "Off"}
+          icon={{ name: "lock", color: "teal" }}
+          value={privacy || "Off"}
           chevron
           onPress={() => router.push("/settings/privacy")}
         />
+        <ListRow
+          label="Reminders"
+          icon={{ name: "bell", color: "red" }}
+          chevron
+          onPress={() => router.push("/settings/reminders")}
+        />
       </ListGroup>
-      <ListGroup>
+
+      <ListGroup header="Data">
         <ListRow
-          label="Categories"
-          icon={{ name: "tag.fill", color: "amber" }}
-          chevron
-          onPress={() => router.push("/settings/categories")}
-        />
-        <ListRow
-          label="Accounts"
-          icon={{ name: "building.columns.fill", color: "amber" }}
-          chevron
-          onPress={() => router.push("/accounts")}
-        />
-        <ListRow
-          label="People"
-          icon={{ name: "loans", color: "amber" }}
-          chevron
-          onPress={() => router.push("/people")}
-        />
-        <ListRow
-          label="Tags"
-          icon={{ name: "tag", color: "amber" }}
-          chevron
-          onPress={() => router.push("/tags")}
-        />
-        <ListRow
-          label="Recurring"
-          icon={{ name: "repeat", color: "amber" }}
-          chevron
-          onPress={() => router.push("/recurring")}
-        />
-        <ListRow
-          label="Subscriptions"
-          icon={{ name: "subscriptions", color: "amber" }}
-          chevron
-          onPress={() => router.push("/subscriptions")}
-        />
-        <ListRow
-          label="Backup & sync"
-          icon={{ name: "cloud", color: "amber" }}
+          label="Backup and sync"
+          icon={{ name: "cloud", color: "blue" }}
           chevron
           onPress={() => router.push("/settings/backup")}
         />
         <ListRow
-          label="Import & export"
-          icon={{ name: "square.and.arrow.up", color: "amber" }}
+          label="Import and export"
+          icon={{ name: "square.and.arrow.up", color: "green" }}
           chevron
           onPress={() => router.push("/settings/transfer")}
         />
       </ListGroup>
+
       <ListGroup>
         <ListRow
           label="About"
@@ -200,7 +266,7 @@ export default function Settings() {
         />
       </ListGroup>
       <Text variant="footnote" tone="tertiary" className="text-center">
-        {`Version ${Constants.expoConfig?.version ?? ""} · Made with love`}
+        {`${APP_NAME} ${Constants.expoConfig?.version ?? ""}`}
       </Text>
 
       <OptionPicker

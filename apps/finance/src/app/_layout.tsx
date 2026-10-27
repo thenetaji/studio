@@ -15,11 +15,14 @@ import { LockGate } from "@/features/lock/lock-gate";
 import { useSetting, usePostDueRecurring, useReminderSync } from "@/data/hooks";
 import { useIconPrefsSync } from "@/lib/icon-prefs-sync";
 import { DemoSeedGate } from "@/lib/demo-seed-gate";
+import { AmountsPrivacy } from "@/features/privacy/amounts-privacy";
 import {
   setHapticsEnabled,
   applyThemePreference,
   followWebColorScheme,
   setAccent,
+  setPalette,
+  setCategoryMode,
   useTokens,
 } from "@studio/theme";
 
@@ -114,6 +117,8 @@ function Navigator() {
   const { colors } = useTokens();
   const [theme] = useSetting("theme");
   const [accent] = useSetting("accent");
+  const [palette] = useSetting("palette");
+  const [categoryColors] = useSetting("category_colors");
   const [haptics] = useSetting("haptics");
   const [onboardingDone] = useSetting("onboarding_done");
 
@@ -123,6 +128,12 @@ function Navigator() {
   useEffect(() => {
     setAccent(accent);
   }, [accent]);
+  useEffect(() => {
+    setPalette(palette);
+  }, [palette]);
+  useEffect(() => {
+    setCategoryMode(categoryColors);
+  }, [categoryColors]);
   useEffect(() => {
     setHapticsEnabled(haptics);
   }, [haptics]);
@@ -200,6 +211,10 @@ function Navigator() {
           options={{ ...sheet("Edit transaction"), headerShown: false }}
         />
         <Stack.Screen name="category/[id]" options={push("Category")} />
+        <Stack.Screen name="categories/[id]" options={sheet("Category")} />
+        <Stack.Screen name="payees" options={push("Payees")} />
+        <Stack.Screen name="payee" options={push("Payee")} />
+        <Stack.Screen name="insights-more" options={push("More insights")} />
         <Stack.Screen name="budget/new" options={sheet("New budget")} />
         <Stack.Screen
           name="budget/categories"
@@ -228,6 +243,17 @@ function Navigator() {
             sheetExpandsWhenScrolledToEdge: true,
           }}
         />
+        <Stack.Screen name="report/[month]" options={push("Monthly report")} />
+        <Stack.Screen
+          name="review/[year]"
+          options={{
+            presentation: "fullScreenModal",
+            animation: "fade",
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen name="calendar" options={push("Calendar")} />
+        <Stack.Screen name="share-image" options={sheet("Share")} />
         <Stack.Screen name="settings" options={{ presentation: "modal" }} />
       </Stack.Protected>
       <Stack.Screen name="dev/gallery" />
@@ -248,7 +274,9 @@ export default function RootLayout() {
         <StatusBar style="auto" />
         <Database>
           <DemoSeedGate>
-            <Navigator />
+            <AmountsPrivacy>
+              <Navigator />
+            </AmountsPrivacy>
             <LockGate />
           </DemoSeedGate>
         </Database>

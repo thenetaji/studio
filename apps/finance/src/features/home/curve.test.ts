@@ -4,6 +4,7 @@ import {
   frequencyLabel,
   greetingFor,
   monotoneSegments,
+  paceDelta,
   percentUsed,
 } from "./curve";
 
@@ -73,5 +74,18 @@ describe("format helpers", () => {
     expect(frequencyLabel("weekly", 2)).toBe("Every 2 weeks");
     expect(dueIn(4)).toBe("in 4 days");
     expect(dueIn(1)).toBe("Tomorrow");
+  });
+});
+
+describe("paceDelta", () => {
+  it("compares today's spend with the reference at the same day", () => {
+    expect(paceDelta([100, 250], [80, 160, 240])).toBe(90);
+    expect(paceDelta([100], [150, 300])).toBe(-50);
+    expect(paceDelta([100, 200, 300, 400], [100, 200])).toBe(200);
+  });
+
+  it("is null without either line", () => {
+    expect(paceDelta([], [100])).toBeNull();
+    expect(paceDelta([100], [])).toBeNull();
   });
 });

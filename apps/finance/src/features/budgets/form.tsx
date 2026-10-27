@@ -117,6 +117,7 @@ export function BudgetForm({ mode, budgetId }: BudgetFormProps) {
         monthStart: settings.month_start,
       }),
   );
+  const [rollover, setRollover] = React.useState(source?.rollover ?? false);
   const [keypadOpen, setKeypadOpen] = React.useState(mode === "new");
   const [nameFocused, setNameFocused] = React.useState(false);
   const entry = useAmountEntry(digits, amount, setAmount);
@@ -156,6 +157,7 @@ export function BudgetForm({ mode, budgetId }: BudgetFormProps) {
       startAnchor: anchor,
       scope,
       categoryIds: scope === "categories" ? categoryIds : [],
+      rollover,
     };
     try {
       if (mode === "edit" && budgetId) actions.budgets.update(budgetId, input);
@@ -179,6 +181,7 @@ export function BudgetForm({ mode, budgetId }: BudgetFormProps) {
       startAnchor: source.startAnchor,
       scope: source.scope,
       categoryIds: source.categoryIds,
+      rollover: source.rollover,
     };
     actions.budgets.delete(budgetId);
     if (router.canDismiss()) router.dismissAll();
@@ -333,6 +336,11 @@ export function BudgetForm({ mode, budgetId }: BudgetFormProps) {
             options={anchorOptions(period)}
             selected={anchor}
             onSelect={setAnchor}
+          />
+          <ListRow
+            label="Roll over unspent"
+            switchValue={rollover}
+            onSwitchChange={setRollover}
           />
         </ListGroup>
         {mode === "edit" ? (

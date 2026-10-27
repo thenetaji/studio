@@ -152,7 +152,7 @@ export async function onboard(page, base, code) {
 
 export async function seeded(page, base, mode) {
   await open(page, base, `/?seed=${mode}`);
-  // An empty install shows only the hero and the empty state (no Recent list, no stats strip).
+  // An empty install shows only the net worth hero and the empty state (no Recent list, no strip).
   await expectText(page, mode === "empty" ? "No transactions yet" : "Recent");
 }
 
@@ -268,10 +268,10 @@ export const flows = [
       await expectText(page, "€ EUR");
       await tap(page, "Start");
       await expectText(page, "No transactions yet");
-      // Empty Home: the hero reads zero in the chosen currency (the Balance strip appears with the first transaction).
-      await expectLabel(page, "Spent in ", { exact: false });
+      // Empty Home: the net worth hero reads zero in the chosen currency.
+      await expectLabel(page, "Net worth, ", { exact: false });
       assert.ok(
-        (await labelsOf(page)).some((l) => /^Spent in \w+, 0 euros$/.test(l)),
+        (await labelsOf(page)).some((l) => /^Net worth, €\s*0$/.test(l)),
         "hero should read zero euros",
       );
       assert.match(await body(page), /€\s*0/);
@@ -478,7 +478,7 @@ export const flows = [
     async run({ page, base }) {
       await seeded(page, base, "demo");
       const homeBalance = await page
-        .locator('[aria-label^="Balance, "]')
+        .locator('[aria-label^="Net worth, "]')
         .first()
         .getAttribute("aria-label");
       // Demo accounts carry extras (people, lending), so read the starting balances instead of hard-coding them.
@@ -491,7 +491,7 @@ export const flows = [
           l.match(/(-?[\d,]+(?:\.\d+)?) rupees$/)[1].replace(/,/g, ""),
         );
       };
-      await page.locator('[aria-label^="Balance, "]').first().tap();
+      await page.locator('[aria-label^="Net worth, "]').first().tap();
       await expectLabel(page, "HDFC Savings, Bank, ", { exact: false });
       const [hdfc0, cash0] = [
         await rupees("HDFC Savings"),
@@ -516,13 +516,13 @@ export const flows = [
       await sheetClosed(page);
       assert.equal(
         await page
-          .locator('[aria-label^="Balance, "]')
+          .locator('[aria-label^="Net worth, "]')
           .first()
           .getAttribute("aria-label"),
         homeBalance,
         "Home total changed after a transfer",
       );
-      await page.locator('[aria-label^="Balance, "]').first().tap();
+      await page.locator('[aria-label^="Net worth, "]').first().tap();
       await expectLabel(page, "HDFC Savings, Bank, ", { exact: false });
       assert.equal(
         await rupees("HDFC Savings"),
@@ -761,7 +761,7 @@ export const flows = [
       await page.locator('[aria-label^="EUR"]').first().tap();
       await tap(page, "Start");
       await expectText(page, "No transactions yet");
-      // The Balance strip only exists once there is a transaction: log a €10 expense so Home shows it.
+      // Log a €10 expense so the net worth moves below zero.
       await addExpense(page, {
         amount: "10",
         title: "Tea",
@@ -769,8 +769,8 @@ export const flows = [
       });
       await save(page);
       await sheetClosed(page);
-      await expectLabel(page, "Balance, −€10");
-      await page.locator('[aria-label^="Balance, "]:visible').first().tap();
+      await expectLabel(page, "Net worth, −€10");
+      await page.locator('[aria-label^="Net worth, "]:visible').first().tap();
       await page.locator('[aria-label="Add account"]:visible').tap();
       await page.locator('[aria-label="Name"]').waitFor();
       await page.locator('[aria-label="Name"]').fill("Dollars");
@@ -805,7 +805,7 @@ export const flows = [
       });
       await expectLabel(page, "Total, 80 euros");
       await goClient(page, "/");
-      await expectLabel(page, "Balance, €80");
+      await expectLabel(page, "Net worth, €80");
       // The rate lives in Settings > Currency too: changing it re-converts the total.
       await goClient(page, "/settings/currency");
       await expectText(page, "Exchange rates");
@@ -819,7 +819,7 @@ export const flows = [
       await rate.press("Enter");
       await rate.blur();
       await goClient(page, "/");
-      await expectLabel(page, "Balance, €40");
+      await expectLabel(page, "Net worth, €40");
     },
   },
   {
@@ -832,6 +832,23 @@ export const flows = [
       await page.locator('[aria-label="Name"]').fill("Pets");
       await page.locator('[aria-label="Save"]:visible').first().tap();
       await expectText(page, "Pets");
+      // Rename it from its row: the editor opens filled in and saves back to the list.
+      await page.locator('[aria-label^="Pets, "]:visible').first().tap();
+      await expectText(page, "Edit category");
+      await page.locator('[aria-label="Name"]').fill("Pet care");
+      await page.locator('[aria-label="Save"]:visible').first().tap();
+      await expectLabel(page, "Pet care, No transactions");
+      await page.locator('[aria-label="Add category"]:visible').tap();
+      await page.locator('[aria-label="Name"]').fill("Pets");
+      await page.locator('[aria-label="Save"]:visible').first().tap();
+      // An unused category goes at once, with Undo; nothing asks where its transactions go.
+      const unused = page.getByText("Pet care", { exact: true }).last();
+      await unused.scrollIntoViewIfNeeded();
+      await swipeLeft(page, unused);
+      await expectText(page, "Undo");
+      await expectNoText(page, "to…");
+      await tapText(page, "Undo");
+      await expectLabel(page, "Pet care, No transactions");
       // The new category is selectable in the add sheet (via the All grid) and saves.
       await goClient(page, "/");
       await addExpense(page, {
@@ -852,7 +869,7 @@ export const flows = [
       const row = page.getByText("Pets", { exact: true }).last();
       await row.scrollIntoViewIfNeeded();
       await swipeLeft(page, row);
-      await expectText(page, "Move transactions to…");
+      await expectText(page, "Move 1 transaction to…");
       await page.getByText("Other", { exact: true }).last().tap();
       await expectNoText(page, "Pets");
       await goClient(page, "/");
@@ -1128,8 +1145,8 @@ export const flows = [
       await tapText(page, "Daily");
       await save(page);
       await sheetClosed(page);
-      // Home surfaces the next bill under "Coming up"; the swipe actions live on the Recurring screen.
-      await expectText(page, "Coming up");
+      // Home surfaces the next bill under "Upcoming bills"; the swipe actions live on the Recurring screen.
+      await expectText(page, "Upcoming bills");
       await expectLabel(page, "Paper, Tomorrow, $100");
       await goClient(page, "/recurring");
       await expectText(page, "Rules");
@@ -1244,6 +1261,39 @@ export const flows = [
         { timeout: 15000 },
       );
       await expectText(page, "Rules");
+    },
+  },
+  {
+    name: "Monthly report and calendar",
+    async run({ page, base }) {
+      const name = (offset) => {
+        const d = new Date();
+        d.setDate(1);
+        d.setMonth(d.getMonth() + offset);
+        return d.toLocaleString("en-US", { month: "long" });
+      };
+      await open(page, base, "/report/last?seed=demo");
+      await expectText(page, "Spending by category");
+      await expectText(page, `Spent in ${name(-1)}`);
+      await tap(page, "Previous month");
+      await expectText(page, `Spent in ${name(-2)}`);
+      await tap(page, "Next month");
+      await expectText(page, `Spent in ${name(-1)}`);
+      await tapText(page, "Calendar");
+      await expectText(page, "Current streak");
+      await expectText(page, "Best streak");
+    },
+  },
+  {
+    name: "Year in review and share",
+    async run({ page, base }) {
+      await open(page, base, "/review/now?seed=demo");
+      await expectText(page, "Year in review");
+      await tap(page, "Next card", { last: false });
+      await expectText(page, "In and out");
+      await page.locator('[aria-label="Share"]:visible').first().tap();
+      await expectText(page, "Hide amounts");
+      await expectText(page, "Share image");
     },
   },
 ];

@@ -18,19 +18,40 @@ describe("normalizeHomeLayout", () => {
     const layout = normalizeHomeLayout([
       { id: "recent", visible: false },
       { id: "widgets", visible: true },
-      { id: "stats", visible: true },
+      { id: "quick_add", visible: true },
       { id: "recent", visible: true },
     ]);
     expect(layout.map((s) => s.id)).toEqual([
       "recent",
-      "stats",
+      "quick_add",
       "pockets",
       ...HOME_SECTION_IDS.filter(
-        (id) => id !== "recent" && id !== "stats" && id !== "pockets",
+        (id) => id !== "recent" && id !== "quick_add" && id !== "pockets",
       ),
     ]);
     expect(layout[0]).toEqual({ id: "recent", visible: false });
-    expect(layout.slice(2).every((s) => s.visible)).toBe(true);
+    expect(layout.slice(1).every((s) => s.visible)).toBe(true);
+  });
+
+  it("replaces Coming up with Budgets and Upcoming bills in place, and drops Summary", () => {
+    const layout = normalizeHomeLayout([
+      { id: "quick_add", visible: true },
+      { id: "stats", visible: true },
+      { id: "pockets", visible: true },
+      { id: "coming_up", visible: false },
+      { id: "heatmap", visible: true },
+      { id: "top_categories", visible: true },
+      { id: "recent", visible: true },
+    ]);
+    expect(layout).toEqual([
+      { id: "quick_add", visible: true },
+      { id: "pockets", visible: true },
+      { id: "budgets", visible: false },
+      { id: "bills", visible: false },
+      { id: "heatmap", visible: true },
+      { id: "top_categories", visible: true },
+      { id: "recent", visible: true },
+    ]);
   });
 
   it("treats anything but an explicit false as visible", () => {
@@ -44,7 +65,10 @@ describe("normalizeHomeLayout", () => {
 describe("moveHomeSection", () => {
   it("swaps neighbours and ignores moves past either end", () => {
     const moved = moveHomeSection(DEFAULT_HOME_LAYOUT, 1, -1);
-    expect(moved.slice(0, 2).map((s) => s.id)).toEqual(["stats", "quick_add"]);
+    expect(moved.slice(0, 2).map((s) => s.id)).toEqual([
+      "pockets",
+      "quick_add",
+    ]);
     expect(moveHomeSection(DEFAULT_HOME_LAYOUT, 0, -1)).toEqual(
       DEFAULT_HOME_LAYOUT,
     );

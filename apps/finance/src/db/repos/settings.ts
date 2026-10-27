@@ -8,7 +8,13 @@ import {
   type IconBackground,
   type IconStyle,
 } from "@studio/icons";
-import { accentPresets, type AccentPresetKey } from "@studio/theme";
+import {
+  accentPresets,
+  palettes,
+  type AccentPresetKey,
+  type CategoryMode,
+  type PaletteKey,
+} from "@studio/theme";
 import { normalizePockets, type Pocket } from "./pockets";
 import {
   DEFAULT_HOME_LAYOUT,
@@ -31,6 +37,10 @@ export interface SettingsMap {
   theme: "system" | "light" | "dark";
   /** Accent colour preset. */
   accent: AccentPresetKey;
+  /** Surface palette: System (Apple neutral), Titanium or Paper. */
+  palette: PaletteKey;
+  /** Categories in mono greys (default) or in colour. */
+  category_colors: CategoryMode;
   haptics: boolean;
   show_decimals: boolean;
   week_start: 1 | 7;
@@ -69,6 +79,7 @@ export const DEFAULT_SETTINGS: Readonly<SettingsMap> = {
   display_currency: "USD",
   theme: "system",
   accent: "ivory",
+  palette: "system",
   haptics: true,
   show_decimals: false,
   week_start: 1,
@@ -81,8 +92,9 @@ export const DEFAULT_SETTINGS: Readonly<SettingsMap> = {
   onboarding_done: false,
   schema_seeded: false,
   recent_searches: [],
-  icon_style: "phosphor-duotone",
-  icon_background: "graphite-glyph",
+  icon_style: "sf",
+  icon_background: "mono",
+  category_colors: "mono",
   home_layout: DEFAULT_HOME_LAYOUT.map((s) => ({ ...s })),
   pockets: [],
   hide_amounts: false,
@@ -97,6 +109,8 @@ export const DEFAULT_SETTINGS: Readonly<SettingsMap> = {
 
 const ENUMS: Partial<Record<SettingKey, readonly unknown[]>> = {
   accent: Object.keys(accentPresets),
+  palette: Object.keys(palettes),
+  category_colors: ["mono", "colour"],
   icon_style: ICON_STYLES,
   icon_background: ICON_BACKGROUNDS,
   sync_provider: SYNC_PROVIDER_IDS,

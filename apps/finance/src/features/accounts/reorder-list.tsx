@@ -24,6 +24,7 @@ type ReorderRowProps = {
   slots: SharedValue<Slots>;
   active: SharedValue<string | null>;
   onDrop: () => void;
+  onDragChange?: (dragging: boolean) => void;
   renderRow: (handle: React.ReactNode) => React.ReactNode;
   onMove: (direction: -1 | 1) => void;
   label: string;
@@ -36,6 +37,7 @@ function ReorderRow({
   slots,
   active,
   onDrop,
+  onDragChange,
   renderRow,
   onMove,
   label,
@@ -52,6 +54,7 @@ function ReorderRow({
       start.value = (slots.value[id] ?? 0) * rowHeight;
       y.value = start.value;
       runOnJS(haptic)("light");
+      if (onDragChange) runOnJS(onDragChange)(true);
     })
     .onUpdate((event) => {
       y.value = Math.min(
@@ -69,6 +72,7 @@ function ReorderRow({
         active.value = null;
         runOnJS(onDrop)();
       }
+      if (onDragChange) runOnJS(onDragChange)(false);
     });
 
   const style = useAnimatedStyle(() => {
@@ -123,6 +127,8 @@ type ReorderListProps = {
     isLast: boolean,
   ) => React.ReactNode;
   onReorder: (ids: string[]) => void;
+  /** Called with true when a handle is touched and false when it is let go, so a parent ScrollView can stop scrolling meanwhile. */
+  onDragChange?: (dragging: boolean) => void;
 };
 
 /** Drag-to-reorder on Reanimated + Gesture Handler: fixed-height rows, the dragged row follows the finger and others shift. */
@@ -132,10 +138,17 @@ function ReorderList({
   labelOf,
   renderRow,
   onReorder,
+  onDragChange,
 }: ReorderListProps) {
+  // Keyed by content, not identity: callers often pass a fresh array each render, and resetting the
+  // slots on every render snapped rows back mid-drag.
+  const order = ids.join("|");
   const initial = React.useMemo(
-    () => Object.fromEntries(ids.map((id, i) => [id, i])) as Slots,
-    [ids],
+    () =>
+      Object.fromEntries(
+        (order ? order.split("|") : []).map((id, i) => [id, i]),
+      ) as Slots,
+    [order],
   );
   const slots = useSharedValue<Slots>(initial);
   const active = useSharedValue<string | null>(null);
@@ -159,6 +172,7 @@ function ReorderList({
           slots={slots}
           active={active}
           onDrop={drop}
+          onDragChange={onDragChange}
           label={labelOf(id)}
           onMove={(direction) =>
             onReorder(moveItem(ids, index, index + direction))

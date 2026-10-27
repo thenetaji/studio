@@ -1,6 +1,8 @@
 export * from "./useAccounts";
 export * from "./useBudgets";
 export * from "./useCategories";
+export * from "./useCategoryUsage";
+export * from "./useEntryCount";
 export * from "./useInsights";
 export * from "./usePeriodSummary";
 export * from "./useSettings";
@@ -36,3 +38,6 @@ export * from "./useRangeDailyTotals";
 export * from "./useBreakdown";
 export * from "./useBalanceHistory";
 export * from "./usePockets";
+export * from "./useInsightLines";
+export * from "./useBalanceMovements";
+export * from "./useReports";

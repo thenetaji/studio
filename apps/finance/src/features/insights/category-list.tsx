@@ -3,6 +3,7 @@ import { StyleSheet, View } from "react-native";
 import Animated, { LinearTransition } from "react-native-reanimated";
 
 import { IconTile, Pressable, Text } from "@studio/ui";
+import { Sparkline } from "@studio/charts/components";
 import { formatMoney, formatMoneyForSpeech } from "@studio/money";
 import { durations, type CategoryColorKey } from "@studio/theme";
 import { useTokens } from "@studio/theme";
@@ -15,6 +16,21 @@ export type CategoryListItem = {
   color: CategoryColorKey;
   amount: number;
   percent: number;
+  /** Against the previous period and its recent average; absent when there is no history to show. */
+  trend?: CategoryListTrend;
+};
+
+export type CategoryListTrend = {
+  /** One total per period, oldest first, ending with this one. */
+  spark: readonly number[];
+  /** Short change text: "12%", "New", "Same". */
+  text: string;
+  /** Arrow to draw before `text`. */
+  arrow: "up" | "down" | null;
+  /** True when the change is the welcome direction (spending fell, income rose). */
+  good: boolean;
+  /** Spoken form, e.g. "up 12 percent on September, 3-month average 4,100 rupees". */
+  speech: string;
 };
 
 type CategoryListProps = {
@@ -43,11 +59,13 @@ function CategoryRow({
     decimals: showDecimals ? undefined : 0,
   });
   const share = Math.max(0, Math.min(1, item.percent / 100));
+  const trend = item.trend;
   return (
     <Pressable
       role="button"
       disabled={item.id === null}
       accessibilityLabel={`${item.name}, ${formatMoneyForSpeech(item.amount, currency, { sign: "none", locale })}, ${item.percent} percent`}
+      accessibilityHint={trend?.speech}
       onPress={onPress}
       scale={1}
       className="min-h-[60px] flex-row items-center bg-surface px-4 py-2.5 active:bg-fill"
@@ -71,6 +89,36 @@ function CategoryRow({
           />
         </View>
       </View>
+      {trend ? (
+        <View className="ml-3 items-center" style={{ width: 52 }}>
+          <Sparkline
+            values={trend.spark}
+            width={48}
+            height={20}
+            endColor={category[item.color]}
+          />
+          <View className="mt-0.5 flex-row items-center">
+            {trend.arrow ? (
+              <Text
+                variant="caption"
+                tone={trend.good ? "income" : "tertiary"}
+                className="mr-0.5"
+                style={{ fontSize: 8, lineHeight: 12 }}
+              >
+                {trend.arrow === "up" ? "▲" : "▼"}
+              </Text>
+            ) : null}
+            <Text
+              variant="caption"
+              tone={trend.good ? "income" : "tertiary"}
+              numeric
+              numberOfLines={1}
+            >
+              {trend.text}
+            </Text>
+          </View>
+        </View>
+      ) : null}
       <View className="ml-4 items-end" style={{ minWidth: 72 }}>
         <Text variant="body" numeric numberOfLines={1} className="font-medium">
           {amount}

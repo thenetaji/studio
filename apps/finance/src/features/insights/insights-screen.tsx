@@ -1,6 +1,9 @@
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import * as React from "react";
 import { ScrollView, View } from "react-native";
+
+import { ReportEntryRow } from "@/features/report/entry";
+import { ReviewEntryCard } from "@/features/review/entry";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   FadeIn,
@@ -10,20 +13,27 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
-import { Amount, SectionHeader, Card, Chip, Pressable, Text } from "@studio/ui";
-import { axisLabels } from "@studio/charts/lib";
-import { BarChart, Donut, DonutLegend } from "@studio/charts/components";
+import {
+  Amount,
+  Card,
+  Chip,
+  ListGroup,
+  ListRow,
+  Pressable,
+  SectionHeader,
+  SegmentedControl,
+  Text,
+} from "@studio/ui";
+import { Donut, DonutLegend } from "@studio/charts/components";
 import {
   useBreakdown,
-  useCashFlow,
+  useInsightLines,
   useInsights,
-  useInsightsExtras,
   useSettings,
   useTodayKey,
 } from "@/data/hooks";
 import {
   addDays,
-  diffDays,
   periodLabel,
   type PeriodSettings,
   type PeriodType,
@@ -49,35 +59,43 @@ import {
   selectedSlices,
 } from "./breakdown-model";
 import { CashFlowCard } from "./cash-flow-card";
+import {
+  cashFlowMonths,
+  cashFlowRange,
+  monthlyCashFlow,
+} from "./cashflow-model";
 import { CategoryList, type CategoryListItem } from "./category-list";
-import { barsTitle, deltaLine, scrubLabel } from "./labels";
+import { CompareCard } from "./compare-card";
+import { FlowCard } from "./flow-card";
+import { deltaLine, previousName, trendBadge } from "./labels";
 import { KindMenu } from "./kind-menu";
 import { donutData, keyForName, listItems, summaryLabel } from "./model";
+import { NetWorthCard } from "./net-worth-card";
 import {
   canStepForward,
+  contextParams,
+  firstParam,
   parseBreakdownBy,
   parseInsightsParams,
   parseScope,
   periodOf,
   singleKind,
   stepView,
+  type InsightsContext,
   type InsightsKind,
   type InsightsParams,
   type InsightsView,
 } from "./params";
+import { PayeesCard } from "./payees-card";
 import { PeriodControls } from "./period-controls";
-import { RunningCard } from "./running-card";
-import { TrendCard } from "./trend-card";
-import {
-  AccountsCard,
-  IncomeSourcesCard,
-  MerchantsCard,
-  MonthlyCard,
-  StatsGrid,
-  WeekdayCard,
-} from "./sections";
 import { useRangeStore } from "./range-store";
 import { ScopeBar } from "./scope-bar";
+import {
+  categoryKeyOf,
+  categoryTrends,
+  comparePeriods,
+  trendsRange,
+} from "./trends-model";
 
 const LIST_TITLES: Record<BreakdownBy, string> = {
   category: "Categories",
@@ -87,15 +105,25 @@ const LIST_TITLES: Record<BreakdownBy, string> = {
   merchant: "Merchants",
 };
 
+/** The deeper half of the screen shows one of these at a time. */
+const SECTIONS = ["flow", "compare", "payees", "worth"] as const;
+type Section = (typeof SECTIONS)[number];
+const SECTION_LABELS = ["Flow", "Compare", "Payees", "Net worth"] as const;
+
+/** Category rows shown before "Show all". */
+const LIST_LIMIT = 6;
+
 type Selection = { key: string } | { name: string } | null;
 
 export default function InsightsScreen() {
   const router = useRouter();
-  const params: InsightsParams = useLocalSearchParams() as InsightsParams;
+  const params = useLocalSearchParams() as InsightsParams & {
+    section?: string;
+    worth?: string;
+  };
   const settings = useSettings();
   const money = useMoneyContext();
   const today = useTodayKey();
-  const { colors, scheme } = useTokens();
   const openRange = useRangeStore((s) => s.open);
 
   const periodSettings = React.useMemo<PeriodSettings>(
@@ -112,34 +140,69 @@ export default function InsightsScreen() {
   const [selection, setSelection] = React.useState<Selection>(
     initial.select ? { name: initial.select } : null,
   );
-  const [scrub, setScrub] = React.useState<number | null>(null);
   const [by, setBy] = React.useState<BreakdownBy>(() =>
     parseBreakdownBy(params.by),
   );
   const [scope, setScope] = React.useState<InsightsScope>(() =>
     parseScope(params),
   );
+  const [section, setSection] = React.useState<Section>(
+    () => SECTIONS.find((s) => s === firstParam(params.section)) ?? "flow",
+  );
+  const [showAll, setShowAll] = React.useState(false);
 
   const period = periodOf(view, periodSettings);
   const both = view.kind === "both";
   const kind = singleKind(view.kind);
-  const insights = useInsights(period, kind, today, scope);
-  // Both mode shows where the income came from too.
-  const incomeInsights = useInsights(period, "income", today, scope);
-  const cashFlow = useCashFlow(period, scope);
-  const extras = useInsightsExtras(period, kind, periodSettings, today, scope);
+  const spending = useInsights(period, "expense", today, scope);
+  const income = useInsights(period, "income", today, scope);
+  const insights = kind === "income" ? income : spending;
   const breakdown = useBreakdown(period, kind, by, scope);
   const byCategory = by === "category";
   const { currency } = insights;
+  const { scheme, category } = useTokens();
   const fmt = React.useMemo(
     () => ({
       currency,
       locale: money.locale,
       showDecimals: money.showDecimals,
       scheme,
+      palette: category,
     }),
-    [currency, money.locale, money.showDecimals, scheme],
+    [currency, money.locale, money.showDecimals, scheme, category],
   );
+
+  // One read of raw lines feeds the category trends, the comparison, payees and the monthly cash flow.
+  const months = React.useMemo(
+    () => cashFlowMonths(period, today, periodSettings),
+    [period, today, periodSettings],
+  );
+  const linesRange = React.useMemo(() => {
+    const trend = trendsRange(period);
+    const cash = cashFlowRange(months);
+    return {
+      from: trend.from < cash.from ? trend.from : cash.from,
+      to: period.to > cash.to ? period.to : cash.to,
+    };
+  }, [period, months]);
+  const lines = useInsightLines(linesRange, scope);
+  const trends = React.useMemo(
+    () => categoryTrends(lines.lines, kind, period, today, lines.ctx),
+    [lines, kind, period, today],
+  );
+  const comparison = React.useMemo(
+    () => comparePeriods(lines.lines, kind, period, today, lines.ctx),
+    [lines, kind, period, today],
+  );
+  const cashFlow = React.useMemo(
+    () => monthlyCashFlow(lines.lines, months, period, today, lines.ctx),
+    [lines, months, period, today],
+  );
+  const context = React.useMemo<InsightsContext>(
+    () => ({ period, kind, scope }),
+    [period, kind, scope],
+  );
+  const before = previousName(period);
 
   const donut = React.useMemo(
     () =>
@@ -158,30 +221,29 @@ export default function InsightsScreen() {
           : null;
   const selectedKey =
     rawKey !== null && donut.some((d) => d.key === rawKey) ? rawKey : null;
-  const rows = React.useMemo(
-    () => listItems(insights, selectedKey),
-    [insights, selectedKey],
+  const rows = React.useMemo<CategoryListItem[]>(
+    () =>
+      listItems(insights, selectedKey).map((item) => {
+        const trend = trends.get(categoryKeyOf(item.id));
+        return trend && trend.spark.some((v) => v > 0)
+          ? {
+              ...item,
+              trend: trendBadge(trend, kind, before, {
+                currency,
+                locale: money.locale,
+              }),
+            }
+          : item;
+      }),
+    [insights, selectedKey, trends, kind, before, currency, money.locale],
   );
+  const visibleRows =
+    showAll || selectedKey !== null ? rows : rows.slice(0, LIST_LIMIT);
   const slices = React.useMemo(
     () => selectedSlices(breakdown.slices, selectedKey),
     [breakdown.slices, selectedKey],
   );
-  const selectedColor = donut.find((d) => d.key === selectedKey)?.color;
-  const barColor =
-    selectedColor ?? (kind === "income" ? colors.income : undefined);
 
-  const bars = React.useMemo(
-    () => insights.series.map((p) => ({ key: p.key, value: p.amount })),
-    [insights.series],
-  );
-  const labels = React.useMemo(
-    () =>
-      axisLabels(
-        insights.series.map((p) => p.key),
-        insights.granularity,
-      ),
-    [insights.series, insights.granularity],
-  );
   const delta =
     insights.previousTotal > 0
       ? deltaLine(insights.delta, period, kind, {
@@ -205,7 +267,7 @@ export default function InsightsScreen() {
 
   const reset = () => {
     setSelection(null);
-    setScrub(null);
+    setShowAll(false);
   };
   const step = (direction: 1 | -1) => {
     if (direction === 1 && !forward) return;
@@ -263,23 +325,31 @@ export default function InsightsScreen() {
     setScope(next);
     reset();
   };
+  const changeSection = (index: number) => {
+    const next = SECTIONS[index] ?? "flow";
+    if (next !== section) setSection(next);
+  };
+  const openCategoryId = (id: string, categoryKind: "expense" | "income") =>
+    router.push({
+      pathname: "/category/[id]",
+      params: {
+        id,
+        from: period.from,
+        to: period.to,
+        type: period.type,
+        kind: categoryKind,
+      },
+    });
   const openSlice = (slice: BreakdownSlice) => {
     const target = slice.target;
     if (target === null) return;
-    if (target.type === "category")
-      router.push({
-        pathname: "/category/[id]",
-        params: {
-          id: target.id,
-          from: period.from,
-          to: period.to,
-          type: period.type,
-          kind,
-        },
-      });
+    if (target.type === "category") openCategoryId(target.id, kind);
     else if (target.type === "tag")
       router.push({ pathname: "/tags/[id]", params: { id: target.id } });
     else router.push({ pathname: "/accounts/[id]", params: { id: target.id } });
+  };
+  const openCategory = (item: CategoryListItem) => {
+    if (item.id !== null) openCategoryId(item.id, kind);
   };
   const jumpToCurrent = () => {
     haptic("selection");
@@ -296,31 +366,11 @@ export default function InsightsScreen() {
       else if (event.translationX > 60) step(-1);
     });
 
-  const openCategory = (item: CategoryListItem) => {
-    if (item.id === null) return;
-    router.push({
-      pathname: "/category/[id]",
-      params: {
-        id: item.id,
-        from: period.from,
-        to: period.to,
-        type: period.type,
-        kind,
-      },
-    });
-  };
-
   const decimals = money.showDecimals ? undefined : 0;
   const total = formatMoney(insights.total, currency, {
     locale: money.locale,
     decimals,
   });
-  const average = formatMoney(insights.average, currency, {
-    locale: money.locale,
-    decimals: 0,
-  });
-  const noun = insights.granularity === "day" ? "day" : "month";
-  const days = diffDays(period.from, period.to) + 1;
 
   return (
     <View className="flex-1 bg-bg">
@@ -342,12 +392,12 @@ export default function InsightsScreen() {
         <Animated.View style={fadeStyle}>
           <GestureDetector gesture={swipe}>
             <View collapsable={false}>
-              <View className="px-4 pb-4 pt-3">
+              <View className="px-4 pb-1 pt-3">
                 <KindMenu kind={view.kind} onChange={changeKind} />
                 {both ? (
                   <BothHero
-                    spent={insights.total}
-                    earned={incomeInsights.total}
+                    spent={spending.total}
+                    earned={income.total}
                     currency={currency}
                     locale={money.locale}
                     decimals={decimals}
@@ -396,29 +446,7 @@ export default function InsightsScreen() {
                   ) : null}
                 </View>
               </View>
-              {extras.transactionCount > 0 || (both && extras.earned > 0) ? (
-                <Stagger index={1} className="pb-4">
-                  <StatsGrid
-                    extras={extras}
-                    both={both}
-                    currency={currency}
-                    locale={money.locale}
-                  />
-                </Stagger>
-              ) : null}
-              {cashFlow.totalIn > 0 || cashFlow.totalOut > 0 ? (
-                <Stagger index={2}>
-                  <CashFlowCard flow={cashFlow} locale={money.locale} />
-                </Stagger>
-              ) : null}
-              <Stagger
-                index={3}
-                className={
-                  cashFlow.totalIn > 0 || cashFlow.totalOut > 0
-                    ? "pt-4"
-                    : undefined
-                }
-              >
+              <Stagger index={1}>
                 <SectionHeader title={breakdownTitle(by, kind)} />
                 <Card className="mx-4 items-center px-0 pb-2 pt-3">
                   <ScrollView
@@ -459,20 +487,13 @@ export default function InsightsScreen() {
                   />
                 </Card>
               </Stagger>
-              {both && incomeInsights.total > 0 ? (
-                <IncomeSourcesCard
-                  insights={incomeInsights}
-                  currency={currency}
-                  locale={money.locale}
-                />
-              ) : null}
             </View>
           </GestureDetector>
 
           <SectionHeader
             title={LIST_TITLES[by]}
             actionLabel={selectedKey !== null ? "Show all" : undefined}
-            onAction={reset}
+            onAction={() => setSelection(null)}
           />
           <Card className="mx-4 p-0">
             {!byCategory && slices.length > 0 ? (
@@ -493,99 +514,127 @@ export default function InsightsScreen() {
                 Nothing in this period
               </Text>
             ) : (
-              <CategoryList
-                items={rows}
-                currency={currency}
-                locale={money.locale}
-                showDecimals={money.showDecimals}
-                onPress={openCategory}
-              />
+              <>
+                <CategoryList
+                  items={visibleRows}
+                  currency={currency}
+                  locale={money.locale}
+                  showDecimals={money.showDecimals}
+                  onPress={openCategory}
+                />
+                {visibleRows.length < rows.length ? (
+                  <Pressable
+                    role="button"
+                    scale={1}
+                    accessibilityLabel={`Show all ${rows.length} categories`}
+                    onPress={() => {
+                      haptic("selection");
+                      setShowAll(true);
+                    }}
+                    className="h-11 justify-center border-t border-separator px-4 active:bg-fill"
+                  >
+                    <Text variant="callout" tone="accent">
+                      {`Show all ${rows.length}`}
+                    </Text>
+                  </Pressable>
+                ) : null}
+              </>
             )}
           </Card>
 
-          <Stagger index={4}>
-            <Card className="mx-4 mt-4 px-4 pb-1 pt-3">
-              {insights.total > 0 ? (
-                <View className="flex-row items-baseline justify-between">
-                  <Text variant="footnote" tone="secondary">
-                    {barsTitle(insights.granularity, kind)}
-                  </Text>
-                  <Text variant="footnote" tone="tertiary" numeric>
-                    {`Avg ${average}/${noun}`}
-                  </Text>
-                </View>
-              ) : null}
-              <BarChart
-                data={bars}
+          <View className="px-4 pt-8">
+            <SegmentedControl
+              values={SECTION_LABELS}
+              selectedIndex={SECTIONS.indexOf(section)}
+              onChange={changeSection}
+              accessibilityLabel="Section"
+            />
+          </View>
+          {section === "flow" ? (
+            <>
+              <FlowCard
+                income={income}
+                spending={spending}
                 currency={currency}
                 locale={money.locale}
-                labels={labels}
-                average={insights.average}
-                color={barColor}
-                selectedIndex={scrub}
-                onSelect={setScrub}
-                formatLabel={(index) =>
-                  scrubLabel(
-                    insights.series[index] ?? { key: period.from, amount: 0 },
-                    insights.granularity,
-                    currency,
-                    money.locale,
-                  )
-                }
-                accessibilityLabel={`${barsTitle(insights.granularity, kind)}, ${days} days, average ${average} per ${noun}`}
+                onOpenCategory={openCategoryId}
               />
-            </Card>
-          </Stagger>
-
-          {insights.total > 0 ||
-          insights.previousSeries.some((p) => p.amount > 0) ? (
-            <RunningCard
-              insights={insights}
+              {cashFlow.income > 0 || cashFlow.spent > 0 ? (
+                <CashFlowCard
+                  flow={cashFlow}
+                  currency={currency}
+                  locale={money.locale}
+                />
+              ) : null}
+              {spending.total === 0 && income.total === 0 ? (
+                <Text
+                  variant="callout"
+                  tone="secondary"
+                  className="py-10 text-center"
+                >
+                  Nothing in this period
+                </Text>
+              ) : null}
+            </>
+          ) : null}
+          {section === "compare" ? (
+            comparison.current > 0 || comparison.previous > 0 ? (
+              <CompareCard
+                comparison={comparison}
+                kind={kind}
+                categories={lines.categories}
+                currency={currency}
+                locale={money.locale}
+                previousName={before}
+                onOpenCategory={(id) => openCategoryId(id, kind)}
+              />
+            ) : (
+              <Text
+                variant="callout"
+                tone="secondary"
+                className="py-10 text-center"
+              >
+                Nothing to compare
+              </Text>
+            )
+          ) : null}
+          {section === "payees" ? (
+            <PayeesCard
+              data={lines}
+              context={context}
+              locale={money.locale}
+              showDecimals={money.showDecimals}
+            />
+          ) : null}
+          {section === "worth" ? (
+            <NetWorthCard
               period={period}
               today={today}
+              settings={periodSettings}
               locale={money.locale}
+              initialStacked={firstParam(params.worth) === "stacked"}
             />
           ) : null}
 
-          {insights.total > 0 ? (
-            <>
-              <TrendCard
-                endRef={
-                  today >= period.from && today < period.to ? today : period.to
+          <View className="gap-3 px-4 pt-8">
+            <ReportEntryRow />
+            <ReviewEntryCard />
+          </View>
+          <View className="pt-6">
+            <ListGroup>
+              <ListRow
+                label="More insights"
+                subtitle="Daily, running total, weekdays, accounts"
+                chevron
+                onPress={() =>
+                  router.push({
+                    pathname: "/insights-more",
+                    params: { ...contextParams(context), by },
+                  })
                 }
-                kind={kind}
-                by={by}
-                settings={periodSettings}
-                scope={scope}
-                locale={money.locale}
               />
-              {extras.monthly.some((m) => m.income > 0 || m.spent > 0) ? (
-                <MonthlyCard
-                  monthly={extras.monthly}
-                  currency={currency}
-                  locale={money.locale}
-                />
-              ) : null}
-              <WeekdayCard
-                extras={extras}
-                currency={currency}
-                locale={money.locale}
-              />
-              <MerchantsCard
-                merchants={extras.merchants}
-                kind={kind}
-                currency={currency}
-                locale={money.locale}
-              />
-              {scope.accountId ? null : (
-                <AccountsCard
-                  accounts={extras.accounts}
-                  currency={currency}
-                  locale={money.locale}
-                />
-              )}
-            </>
-          ) : null}
+            </ListGroup>
+          </View>
         </Animated.View>
       </ScrollView>
     </View>

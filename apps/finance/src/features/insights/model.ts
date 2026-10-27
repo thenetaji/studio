@@ -27,6 +27,8 @@ export interface Formatting {
   locale?: string;
   showDecimals: boolean;
   scheme: Scheme;
+  /** Category colours in use (mono greys or colour); defaults to the colour set for `scheme`. */
+  palette?: Record<CategoryColorKey, string>;
 }
 
 /** The donut and its legend show this many categories; the rest fold into Other. */
@@ -65,7 +67,7 @@ export function donutData(insights: Insights, fmt: Formatting): DonutDatum[] {
         decimals: fmt.showDecimals ? undefined : 0,
       }),
       percentLabel: `${row.percent}%`,
-      color: categoryColors[fmt.scheme][colorKey],
+      color: (fmt.palette ?? categoryColors[fmt.scheme])[colorKey],
     };
   });
 }

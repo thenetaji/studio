@@ -204,6 +204,8 @@ export const budgets = sqliteTable("budgets", {
   period: text("period").$type<BudgetPeriod>().notNull(),
   startAnchor: integer("start_anchor").notNull(),
   scope: text("scope").$type<BudgetScope>().notNull(),
+  /** Envelope rollover: the previous period's leftover (or overspend) carries into this one. */
+  rollover: integer("rollover", { mode: "boolean" }).notNull().default(false),
   archivedAt: integer("archived_at"),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),

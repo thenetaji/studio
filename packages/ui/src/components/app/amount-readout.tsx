@@ -1,4 +1,7 @@
+import * as React from "react";
 import { View } from "react-native";
+
+import { MASK } from "@studio/money";
 
 import { withAlpha } from "@studio/theme";
 
@@ -6,6 +9,7 @@ import { useTweenedColor } from "../../lib/tint";
 import { Pressable } from "../ui/pressable";
 import { Text } from "../ui/text";
 import { AnimatedNumber } from "./animated-number";
+import { HIDDEN_LABEL, useAmountsHidden } from "./amount-privacy";
 
 type AmountReadoutProps = {
   symbol: string;
@@ -26,17 +30,27 @@ function AmountReadout({
   color,
 }: AmountReadoutProps) {
   const empty = value === "0" || value === "";
+  // With Hide amounts on, a prefilled amount stays masked until the field is tapped or typed into.
+  const hidden = useAmountsHidden();
+  const [initial] = React.useState(value);
+  const [tapped, setTapped] = React.useState(false);
+  const masked = hidden && !empty && !tapped && value === initial;
   const tint = useTweenedColor(color ?? "#000000");
   return (
     <Pressable
       role="button"
       scale={0.98}
       disabled={!onPress}
-      onPress={onPress}
-      accessibilityLabel={accessibilityLabel ?? `${symbol}${value}`}
+      onPress={() => {
+        setTapped(true);
+        onPress?.();
+      }}
+      accessibilityLabel={
+        masked ? HIDDEN_LABEL : (accessibilityLabel ?? `${symbol}${value}`)
+      }
       className="h-[72px] items-center justify-end overflow-hidden px-4"
     >
-      {expression ? (
+      {expression && !masked ? (
         <Text
           variant="footnote"
           tone="secondary"
@@ -57,7 +71,7 @@ function AmountReadout({
           {symbol}
         </Text>
         <AnimatedNumber
-          value={value === "" ? "0" : value}
+          value={masked ? MASK : value === "" ? "0" : value}
           variant="amountEntry"
           tone={empty ? "tertiary" : "default"}
           color={color ? (empty ? withAlpha(tint, 0.45) : tint) : undefined}

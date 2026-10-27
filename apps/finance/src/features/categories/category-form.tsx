@@ -1,23 +1,24 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as React from "react";
-import { Platform, View } from "react-native";
+import { InteractionManager, Platform, View } from "react-native";
 
 import {
+  Card,
   Chip,
   IconTile,
-  ListGroup,
-  Card,
   Input,
+  ListGroup,
   SegmentedControl,
+  SheetScroll,
   Text,
 } from "@studio/ui";
 import { useActions } from "@/data/actions";
 import { useCategories } from "@/data/hooks";
 import { ValidationError } from "@/db/errors";
 import type { CategoryKind } from "@/db/schema";
-import { EntryLayout } from "@/features/entry/entry-layout";
 import { FormRow } from "@/features/entry/form-row";
 import { useSheetHeader } from "@/features/entry/sheet-header";
+import { useKeyboardInset } from "@/features/entry/use-keyboard-inset";
 import { haptic } from "@studio/theme";
 import type { CategoryColorKey } from "@studio/theme";
 
@@ -29,6 +30,8 @@ const KIND_LABELS: Record<CategoryKind, string> = {
   expense: "Expense",
   income: "Income",
 };
+/** Height the icon grid reserves before it mounts, so the sheet does not jump. */
+const GRID_PLACEHOLDER = 420;
 
 type CategoryFormProps = { id: string };
 
@@ -59,14 +62,27 @@ export function CategoryForm({ id }: CategoryFormProps) {
     return [...seen];
   }, [all, kind]);
   const [icon, setIcon] = React.useState(source?.icon ?? "tag.fill");
-  const [color, setColor] = React.useState<CategoryColorKey>(
-    () =>
-      (source?.color as CategoryColorKey | undefined) ??
-      CATEGORY_SWATCHES[
-        all.filter((c) => c.kind === kind).length % CATEGORY_SWATCHES.length
-      ] ??
-      "blue",
+  // A new category suggests the next unused swatch for its kind until a colour is picked.
+  const [picked, setPicked] = React.useState<CategoryColorKey | null>(
+    (source?.color as CategoryColorKey | undefined) ?? null,
   );
+  const color: CategoryColorKey =
+    picked ??
+    CATEGORY_SWATCHES[
+      all.filter((c) => c.kind === kind).length % CATEGORY_SWATCHES.length
+    ] ??
+    "blue";
+
+  // The icon grid is a few hundred tiles; mounting it after the sheet's entrance keeps the slide smooth.
+  const [gridReady, setGridReady] = React.useState(false);
+  React.useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() =>
+      setGridReady(true),
+    );
+    return () => task.cancel();
+  }, []);
+
+  const keyboardInset = useKeyboardInset();
 
   const close = () => {
     if (router.canDismiss()) router.dismiss();
@@ -114,91 +130,110 @@ export function CategoryForm({ id }: CategoryFormProps) {
   if (!creating && !source) return null;
 
   return (
-    <>
-      {header}
-      <EntryLayout>
-        <View
-          className="items-center gap-3 pb-2 pt-2"
-          accessibilityLabel={`Preview, ${name.trim() || "Name"}`}
+    // The scroll view is the sheet's only root (docs/CONVENTIONS.md, Sheets): a toolbar View above it
+    // left the body offset under the toolbar on iOS.
+    <SheetScroll
+      header={header}
+      bodyClassName="gap-4 pt-2"
+      contentContainerStyle={{ paddingBottom: 32 + keyboardInset }}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
+    >
+      <View
+        className="items-center gap-3 pb-2 pt-2"
+        accessibilityLabel={`Preview, ${name.trim() || "Name"}`}
+      >
+        <IconTile icon={icon} color={color} size={72} />
+        <Text
+          variant="title2"
+          tone={name.trim() ? "default" : "tertiary"}
+          numberOfLines={1}
+          className="px-6"
         >
-          <IconTile icon={icon} color={color} size={72} />
-          <Text
-            variant="title2"
-            tone={name.trim() ? "default" : "tertiary"}
-            numberOfLines={1}
-            className="px-6"
-          >
-            {name.trim() || "Name"}
-          </Text>
+          {name.trim() || "Name"}
+        </Text>
+      </View>
+      <View className="px-4">
+        <SegmentedControl
+          values={KINDS.map((k) => KIND_LABELS[k])}
+          selectedIndex={KINDS.indexOf(kind)}
+          onChange={(index) => setKind(KINDS[index] ?? "expense")}
+          disabled={!creating}
+          accessibilityLabel="Kind"
+        />
+      </View>
+      <ListGroup>
+        <FormRow label="Name">
+          <Input
+            variant="inline"
+            value={name}
+            onChangeText={setName}
+            placeholder="Required"
+            returnKeyType="done"
+            autoCapitalize="words"
+            autoCorrect={false}
+            maxLength={32}
+            accessibilityLabel="Name"
+            className="h-6 min-h-0 flex-1 py-0 text-right"
+          />
+        </FormRow>
+        <FormRow label="Group">
+          <Input
+            variant="inline"
+            value={group}
+            onChangeText={setGroup}
+            placeholder="None"
+            returnKeyType="done"
+            autoCapitalize="words"
+            autoCorrect={false}
+            maxLength={24}
+            accessibilityLabel="Group"
+            className="h-6 min-h-0 flex-1 py-0 text-right"
+          />
+        </FormRow>
+      </ListGroup>
+      {groups.length > 0 ? (
+        <View className="-mt-1 flex-row flex-wrap gap-2 px-8">
+          {groups.map((g) => (
+            <Chip
+              key={g}
+              label={g}
+              selected={g === group.trim()}
+              onPress={() => setGroup(g === group.trim() ? "" : g)}
+            />
+          ))}
         </View>
-        <ListGroup>
-          <FormRow label="Name">
-            <Input
-              variant="inline"
-              value={name}
-              onChangeText={setName}
-              placeholder="Name"
-              returnKeyType="done"
-              autoCapitalize="words"
-              autoCorrect={false}
-              maxLength={32}
-              accessibilityLabel="Name"
-              className="h-6 min-h-0 flex-1 py-0 text-right"
-            />
-          </FormRow>
-          <FormRow label="Kind" stacked>
-            <SegmentedControl
-              values={KINDS.map((k) => KIND_LABELS[k])}
-              selectedIndex={KINDS.indexOf(kind)}
-              onChange={(index) => setKind(KINDS[index] ?? "expense")}
-              disabled={!creating}
-              accessibilityLabel="Kind"
-            />
-          </FormRow>
-          <FormRow label="Group" stacked>
-            <Input
-              variant="inline"
-              value={group}
-              onChangeText={setGroup}
-              placeholder="None"
-              returnKeyType="done"
-              autoCapitalize="words"
-              autoCorrect={false}
-              maxLength={24}
-              accessibilityLabel="Group"
-              className="h-6 min-h-0 py-0"
-            />
-            {groups.length > 0 ? (
-              <View className="flex-row flex-wrap gap-2">
-                {groups.map((g) => (
-                  <Chip
-                    key={g}
-                    label={g}
-                    selected={g === group.trim()}
-                    onPress={() => setGroup(g === group.trim() ? "" : g)}
-                  />
-                ))}
-              </View>
-            ) : null}
-          </FormRow>
-          <FormRow label="Colour" stacked>
-            <Swatches value={color} onChange={setColor} />
-          </FormRow>
-        </ListGroup>
-        <View className="px-4">
-          <Text
-            variant="footnote"
-            tone="secondary"
-            className="px-4 pb-2"
-            accessibilityRole="header"
-          >
-            Icon
-          </Text>
-          <Card>
+      ) : null}
+      <View className="px-4">
+        <Text
+          variant="footnote"
+          tone="secondary"
+          className="px-4 pb-2"
+          accessibilityRole="header"
+        >
+          Colour
+        </Text>
+        <Card className="px-3 pb-1 pt-4">
+          <Swatches value={color} onChange={setPicked} />
+        </Card>
+      </View>
+      <View className="px-4">
+        <Text
+          variant="footnote"
+          tone="secondary"
+          className="px-4 pb-2"
+          accessibilityRole="header"
+        >
+          Icon
+        </Text>
+        <Card>
+          {gridReady ? (
             <IconGrid value={icon} color={color} onChange={setIcon} />
-          </Card>
-        </View>
-      </EntryLayout>
-    </>
+          ) : (
+            <View style={{ height: GRID_PLACEHOLDER }} />
+          )}
+        </Card>
+      </View>
+    </SheetScroll>
   );
 }

@@ -9,6 +9,7 @@ export * from "./components/ui/skeleton";
 export * from "./components/ui/switch";
 export * from "./components/ui/text";
 export * from "./components/app/amount";
+export * from "./components/app/amount-privacy";
 export * from "./components/app/amount-readout";
 export * from "./components/app/animated-number";
 export * from "./components/app/blank-screen";

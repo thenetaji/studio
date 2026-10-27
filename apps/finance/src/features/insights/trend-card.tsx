@@ -18,7 +18,7 @@ import {
   type PeriodSettings,
 } from "@studio/dates";
 import { formatMoney, formatMoneyForSpeech } from "@studio/money";
-import { categoryColors, haptic, useTokens } from "@studio/theme";
+import { haptic, useTokens } from "@studio/theme";
 
 import { asColorKey, BREAKDOWN_LABELS } from "./breakdown-model";
 
@@ -42,7 +42,7 @@ function TrendCard({
   scope,
   locale,
 }: TrendCardProps) {
-  const { scheme } = useTokens();
+  const { category } = useTokens();
   const [count, setCount] = React.useState<(typeof COUNTS)[number]>(6);
   const [scrub, setScrub] = React.useState<number | null>(null);
   const [highlight, setHighlight] = React.useState<number | null>(null);
@@ -50,8 +50,8 @@ function TrendCard({
   const { currency, series, months } = trend;
 
   const colors = React.useMemo(
-    () => series.map((s) => categoryColors[scheme][asColorKey(s.color)]),
-    [series, scheme],
+    () => series.map((s) => category[asColorKey(s.color)]),
+    [series, category],
   );
   const data = React.useMemo(
     () => months.map((m) => ({ key: m.key, values: m.values })),

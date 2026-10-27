@@ -11,6 +11,48 @@ import { iconSections } from "./icons";
 const SIZE = 46;
 const RING = 3;
 
+type IconCellProps = {
+  id: string;
+  selected: boolean;
+  /** The category colour when selected, gray otherwise. */
+  color: CategoryColorKey;
+  ring: string;
+  onChange: (icon: string) => void;
+};
+
+/**
+ * One grid cell. Only the selected icon wears the category colour; the rest are neutral, which reads calmer
+ * and means a colour change redraws one tile instead of the whole grid (cells are memoised).
+ */
+const IconCell = React.memo(function IconCell({
+  id,
+  selected,
+  color,
+  ring,
+  onChange,
+}: IconCellProps) {
+  return (
+    <View className="w-1/5 items-center pb-2">
+      <Pressable
+        role="button"
+        accessibilityLabel={conceptLabel(id)}
+        accessibilityState={{ selected }}
+        haptic="selection"
+        onPress={() => onChange(id)}
+        className="items-center justify-center"
+        style={{
+          padding: RING,
+          borderRadius: tileRadius(SIZE) + RING,
+          borderWidth: 2,
+          borderColor: selected ? ring : "transparent",
+        }}
+      >
+        <IconTile icon={id} color={color} size={SIZE} />
+      </Pressable>
+    </View>
+  );
+});
+
 type IconGridProps = {
   value: string;
   color: CategoryColorKey;
@@ -55,29 +97,16 @@ function IconGrid({ value, color, onChange }: IconGridProps) {
               {section.title}
             </Text>
             <View className="-mx-1 flex-row flex-wrap">
-              {section.ids.map((id) => {
-                const on = id === selected;
-                return (
-                  <View key={id} className="w-1/5 items-center pb-2">
-                    <Pressable
-                      role="button"
-                      accessibilityLabel={conceptLabel(id)}
-                      accessibilityState={{ selected: on }}
-                      haptic="selection"
-                      onPress={() => onChange(id)}
-                      className="items-center justify-center"
-                      style={{
-                        padding: RING,
-                        borderRadius: tileRadius(SIZE) + RING,
-                        borderWidth: 2,
-                        borderColor: on ? colors.accent : "transparent",
-                      }}
-                    >
-                      <IconTile icon={id} color={color} size={SIZE} />
-                    </Pressable>
-                  </View>
-                );
-              })}
+              {section.ids.map((id) => (
+                <IconCell
+                  key={id}
+                  id={id}
+                  selected={id === selected}
+                  color={id === selected ? color : "gray"}
+                  ring={colors.accent}
+                  onChange={onChange}
+                />
+              ))}
             </View>
           </View>
         ))
