@@ -1246,4 +1246,37 @@ export const flows = [
       await expectText(page, "Rules");
     },
   },
+  {
+    name: "Monthly report and calendar",
+    async run({ page, base }) {
+      const name = (offset) => {
+        const d = new Date();
+        d.setDate(1);
+        d.setMonth(d.getMonth() + offset);
+        return d.toLocaleString("en-US", { month: "long" });
+      };
+      await open(page, base, "/report/last?seed=demo");
+      await expectText(page, "Spending by category");
+      await expectText(page, `Spent in ${name(-1)}`);
+      await tap(page, "Previous month");
+      await expectText(page, `Spent in ${name(-2)}`);
+      await tap(page, "Next month");
+      await expectText(page, `Spent in ${name(-1)}`);
+      await tapText(page, "Calendar");
+      await expectText(page, "Current streak");
+      await expectText(page, "Best streak");
+    },
+  },
+  {
+    name: "Year in review and share",
+    async run({ page, base }) {
+      await open(page, base, "/review/now?seed=demo");
+      await expectText(page, "Year in review");
+      await tap(page, "Next card", { last: false });
+      await expectText(page, "In and out");
+      await page.locator('[aria-label="Share"]:visible').first().tap();
+      await expectText(page, "Hide amounts");
+      await expectText(page, "Share image");
+    },
+  },
 ];
