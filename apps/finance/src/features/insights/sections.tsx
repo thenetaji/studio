@@ -1,24 +1,21 @@
 import { useRouter } from "expo-router";
 import * as React from "react";
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 
 import {
-  IconTile,
   SectionHeader,
   Card,
   Pressable,
   Text,
   AnimatedNumber,
 } from "@studio/ui";
-import { BarChart, PairedBars } from "@studio/charts/components";
-import type { Insights, InsightsExtras } from "@/data/hooks";
-import { monthShort, parseKey } from "@studio/dates";
+import { BarChart } from "@studio/charts/components";
+import type { InsightsExtras } from "@/data/hooks";
 import { formatMoney, formatMoneyForSpeech } from "@studio/money";
 import { categoryKeys, type CategoryColorKey } from "@studio/theme";
 import { useTokens } from "@studio/theme";
 
-import { monthlyScrub, peakCaption, percentText, weekdayShort } from "./labels";
-import type { InsightsKind } from "./params";
+import { peakCaption, percentText, weekdayShort } from "./labels";
 
 const TILE = { flex: 1, flexBasis: 0, minWidth: 0 } as const;
 const CARD = "mx-4 rounded-[16px] p-4";
@@ -218,136 +215,6 @@ const StatsGrid = React.memo(function StatsGrid({
   );
 });
 
-type IncomeSourcesProps = MoneyProps & { insights: Insights };
-
-/** Both mode: where the money came from, as compact share bars in each source's colour. */
-const IncomeSourcesCard = React.memo(function IncomeSourcesCard({
-  insights,
-  currency,
-  locale,
-}: IncomeSourcesProps) {
-  const { category } = useTokens();
-  const top = insights.categories.slice(0, 5);
-  if (top.length === 0) return null;
-  const largest = top[0]!.amount;
-  return (
-    <>
-      <SectionHeader title="Income by source" />
-      <Card className={`${CARD} gap-4`}>
-        {top.map((row) => {
-          const color = category[asColor(row.category?.color)];
-          const name = row.category?.name ?? "Uncategorised";
-          return (
-            <View
-              key={row.categoryId ?? "none"}
-              accessible
-              accessibilityLabel={`${name}, ${formatMoneyForSpeech(row.amount, currency, { sign: "none" })}, ${row.percent} percent`}
-            >
-              <View className="flex-row items-center pb-1.5">
-                <View
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: 5,
-                    backgroundColor: color,
-                  }}
-                />
-                <Text
-                  variant="subhead"
-                  numberOfLines={1}
-                  className="ml-2 mr-3 flex-1 font-medium"
-                >
-                  {name}
-                </Text>
-                <Text variant="subhead" numeric className="font-medium">
-                  {formatMoney(row.amount, currency, { locale, decimals: 0 })}
-                </Text>
-                <Text
-                  variant="footnote"
-                  tone="tertiary"
-                  numeric
-                  className="w-10 text-right"
-                >
-                  {`${row.percent}%`}
-                </Text>
-              </View>
-              <ShareBar
-                fraction={largest > 0 ? row.amount / largest : 0}
-                color={color}
-                height={6}
-              />
-            </View>
-          );
-        })}
-      </Card>
-    </>
-  );
-});
-
-type MonthlyProps = MoneyProps & { monthly: InsightsExtras["monthly"] };
-
-/** Income against spending for six months. */
-const MonthlyCard = React.memo(function MonthlyCard({
-  monthly,
-  currency,
-  locale,
-}: MonthlyProps) {
-  const { colors } = useTokens();
-  const [scrub, setScrub] = React.useState<number | null>(null);
-  const data = React.useMemo(
-    () => monthly.map((m) => ({ key: m.key, a: m.income, b: m.spent })),
-    [monthly],
-  );
-  const labels = React.useMemo(
-    () =>
-      monthly.map((m, index) => ({
-        index,
-        text: monthShort(parseKey(m.key).month),
-      })),
-    [monthly],
-  );
-  const summary = `Income versus spending, last ${monthly.length} months. ${monthly.map((m) => `${monthShort(parseKey(m.key).month)} in ${formatMoneyForSpeech(m.income, currency, { sign: "none" })}, out ${formatMoneyForSpeech(m.spent, currency, { sign: "none" })}`).join("; ")}`;
-  return (
-    <>
-      <SectionHeader title="Income vs spending" />
-      <Card className={CARD}>
-        <View className="flex-row items-center gap-4 pb-1">
-          {[
-            { text: "Income", color: colors.income },
-            { text: "Spending", color: colors.accent },
-          ].map((item) => (
-            <View key={item.text} className="flex-row items-center">
-              <View
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: item.color,
-                }}
-              />
-              <Text variant="footnote" tone="secondary" className="ml-1.5">
-                {item.text}
-              </Text>
-            </View>
-          ))}
-        </View>
-        <PairedBars
-          data={data}
-          currency={currency}
-          locale={locale}
-          labels={labels}
-          selectedIndex={scrub}
-          onSelect={setScrub}
-          formatLabel={(i) =>
-            monthly[i] ? monthlyScrub(monthly[i], currency, locale) : ""
-          }
-          accessibilityLabel={summary}
-        />
-      </Card>
-    </>
-  );
-});
-
 type WeekdayProps = MoneyProps & { extras: InsightsExtras };
 
 /** Average per weekday with the highest one picked out. */
@@ -397,85 +264,6 @@ const WeekdayCard = React.memo(function WeekdayCard({
             {caption}
           </Text>
         ) : null}
-      </Card>
-    </>
-  );
-});
-
-type MerchantsProps = MoneyProps & {
-  merchants: InsightsExtras["merchants"];
-  kind: InsightsKind;
-};
-
-/** The five titles that took the most, with a thin share bar each. */
-const MerchantsCard = React.memo(function MerchantsCard({
-  merchants,
-  kind,
-  currency,
-  locale,
-}: MerchantsProps) {
-  const router = useRouter();
-  const { colors, category } = useTokens();
-  if (merchants.length === 0) return null;
-  const top = merchants[0]!.amount;
-  return (
-    <>
-      <SectionHeader
-        title={kind === "income" ? "Top sources" : "Top merchants"}
-      />
-      <Card className="mx-4 rounded-[16px] p-0">
-        {merchants.map((m, index) => {
-          const color = asColor(m.category?.color);
-          return (
-            <Pressable
-              key={m.key}
-              role="button"
-              accessibilityLabel={`${m.title}, ${m.count} times, ${formatMoneyForSpeech(m.amount, currency, { sign: "none" })}`}
-              onPress={() =>
-                router.push({ pathname: "/search", params: { q: m.title } })
-              }
-              scale={1}
-              className="min-h-[60px] flex-row items-center bg-surface px-4 py-2.5 active:bg-fill"
-            >
-              <IconTile icon={m.category?.icon ?? "tag.fill"} color={color} />
-              <View className="ml-3 flex-1">
-                <Text variant="body" numberOfLines={1}>
-                  {m.title}
-                </Text>
-                <View className="mt-1.5">
-                  <ShareBar
-                    fraction={top > 0 ? m.amount / top : 0}
-                    color={category[color]}
-                  />
-                </View>
-              </View>
-              <View className="ml-4 items-end" style={{ minWidth: 72 }}>
-                <Text
-                  variant="body"
-                  numeric
-                  numberOfLines={1}
-                  className="font-medium"
-                >
-                  {formatMoney(m.amount, currency, { locale, decimals: 0 })}
-                </Text>
-                <Text variant="caption" tone="tertiary" numeric>
-                  {`${m.count}×`}
-                </Text>
-              </View>
-              {index === merchants.length - 1 ? null : (
-                <View
-                  pointerEvents="none"
-                  style={{
-                    left: 64,
-                    height: StyleSheet.hairlineWidth,
-                    backgroundColor: colors.separator,
-                  }}
-                  className="absolute bottom-0 right-0"
-                />
-              )}
-            </Pressable>
-          );
-        })}
       </Card>
     </>
   );
@@ -531,9 +319,6 @@ const AccountsCard = React.memo(function AccountsCard({
 
 export {
   AccountsCard,
-  IncomeSourcesCard,
-  MerchantsCard,
-  MonthlyCard,
   StatsGrid,
   WeekdayCard,
 };

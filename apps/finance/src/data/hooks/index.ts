@@ -36,3 +36,5 @@ export * from "./useRangeDailyTotals";
 export * from "./useBreakdown";
 export * from "./useBalanceHistory";
 export * from "./usePockets";
+export * from "./useInsightLines";
+export * from "./useBalanceMovements";

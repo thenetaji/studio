@@ -12,3 +12,7 @@ export * from "./tide-bars";
 export * from "./tide-chart";
 export * from "./trend-line";
 export * from "./stacked-bars";
+export * from "./area-stack-chart";
+export * from "./diverging-bars";
+export * from "./sankey-chart";
+export * from "./sparkline";

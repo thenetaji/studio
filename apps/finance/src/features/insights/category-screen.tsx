@@ -8,6 +8,7 @@ import { TransactionRow } from "@/components/app/transaction-row";
 import { MiniBars } from "@studio/charts/components";
 import {
   useCategoryTrend,
+  useInsightLines,
   usePeriodTransactions,
   useSettings,
   useTodayKey,
@@ -32,7 +33,8 @@ import { categoryKeys, type CategoryColorKey } from "@studio/theme";
 import { useTokens } from "@studio/theme";
 
 import { buildCategoryEntries, type CategoryEntry } from "./category-entries";
-import { periodNoun, trendLabel } from "./labels";
+import { percentText, periodNoun, previousName, trendLabel } from "./labels";
+import { categoryTrends, trendsRange } from "./trends-model";
 import { firstParam } from "./params";
 
 const TYPES: readonly PeriodType[] = ["week", "month", "year", "custom"];
@@ -132,7 +134,10 @@ export default function CategoryScreen() {
   const settings = useSettings();
   const today = useTodayKey();
   const money = useMoneyContext();
-  const { category: palette } = useTokens();
+  const {
+    category: palette,
+    colors: { separator },
+  } = useTokens();
 
   const period = React.useMemo<Period>(() => {
     const type = TYPES.find(
@@ -212,6 +217,30 @@ export default function CategoryScreen() {
   );
   const noun = periodNoun(period);
 
+  // Against the previous period (same days so far) and the three whole periods before it.
+  const trendRange = React.useMemo(() => trendsRange(period), [period]);
+  const trendLines = useInsightLines(trendRange);
+  const change = React.useMemo(
+    () =>
+      id
+        ? (categoryTrends(
+            trendLines.lines,
+            kind,
+            period,
+            today,
+            trendLines.ctx,
+          ).get(id) ?? null)
+        : null,
+    [trendLines, kind, period, today, id],
+  );
+  const before = previousName(period);
+  const good =
+    change && change.percent !== null && change.percent !== 0
+      ? kind === "expense"
+        ? change.percent < 0
+        : change.percent > 0
+      : false;
+
   const header = (
     <View className="px-4 pb-2 pt-2">
       <Card className="p-0 px-4 pb-1 pt-4">
@@ -256,6 +285,52 @@ export default function CategoryScreen() {
           color={tint}
           accessibilityLabel={`${category?.name ?? "Category"} over the last ${bars.length} periods`}
         />
+        {change ? (
+          <View
+            className="mt-1 flex-row border-t py-3"
+            style={{ borderTopColor: separator, borderTopWidth: 0.5 }}
+          >
+            <View
+              className="flex-1"
+              accessible
+              accessibilityLabel={
+                change.percent === null
+                  ? `Nothing in ${before}`
+                  : `${change.percent < 0 ? "Down" : "Up"} ${Math.abs(change.percent)} percent on ${before}`
+              }
+            >
+              <Text variant="footnote" tone="secondary" numberOfLines={1}>
+                {`vs ${before}`}
+              </Text>
+              <Text
+                variant="headline"
+                numeric
+                tone={good ? "income" : "default"}
+              >
+                {change.percent === null
+                  ? change.current > 0
+                    ? "New"
+                    : "—"
+                  : change.percent === 0
+                    ? "No change"
+                    : `${change.percent > 0 ? "▲ " : change.percent < 0 ? "▼ " : ""}${percentText(Math.abs(change.percent))}`}
+              </Text>
+            </View>
+            <View className="flex-1 items-end">
+              <Text variant="footnote" tone="secondary" numberOfLines={1}>
+                {`3-${period.type === "custom" ? "period" : period.type} average`}
+              </Text>
+              <Text variant="headline" numeric>
+                {change.average === null
+                  ? "—"
+                  : formatMoney(change.average, currency, {
+                      locale: money.locale,
+                      decimals,
+                    })}
+              </Text>
+            </View>
+          </View>
+        ) : null}
       </Card>
       {entries.length === 0 ? (
         <Text variant="callout" tone="secondary" className="pt-10 text-center">
