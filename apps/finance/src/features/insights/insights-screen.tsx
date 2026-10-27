@@ -1,6 +1,9 @@
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import * as React from "react";
 import { ScrollView, View } from "react-native";
+
+import { ReportEntryRow } from "@/features/report/entry";
+import { ReviewEntryCard } from "@/features/review/entry";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   FadeIn,
@@ -56,7 +59,11 @@ import {
   selectedSlices,
 } from "./breakdown-model";
 import { CashFlowCard } from "./cash-flow-card";
-import { cashFlowMonths, cashFlowRange, monthlyCashFlow } from "./cashflow-model";
+import {
+  cashFlowMonths,
+  cashFlowRange,
+  monthlyCashFlow,
+} from "./cashflow-model";
 import { CategoryList, type CategoryListItem } from "./category-list";
 import { CompareCard } from "./compare-card";
 import { FlowCard } from "./flow-card";
@@ -608,7 +615,11 @@ export default function InsightsScreen() {
             />
           ) : null}
 
-          <View className="pt-8">
+          <View className="gap-3 px-4 pt-8">
+            <ReportEntryRow />
+            <ReviewEntryCard />
+          </View>
+          <View className="pt-6">
             <ListGroup>
               <ListRow
                 label="More insights"

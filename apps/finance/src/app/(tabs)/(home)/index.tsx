@@ -19,6 +19,7 @@ import {
 } from "@/data/hooks";
 import { totalInDisplay } from "@/features/accounts/model";
 import { daysLeft } from "@/features/budgets/logic";
+import { CalendarEntryCard } from "@/features/calendar/entry";
 import { SpendHeatmap } from "@/features/heatmap/spend-heatmap";
 import { BudgetStatus } from "@/features/home/budget-status";
 import { NetWorthHero } from "@/features/home/net-worth-hero";
@@ -193,12 +194,15 @@ export default function Home() {
         ) : null;
       case "heatmap":
         return (
-          <SpendHeatmap
-            todayKey={today}
-            locale={locale}
-            showDecimals={money.showDecimals}
-            currency={displayCurrency}
-          />
+          <View className="gap-3">
+            <SpendHeatmap
+              todayKey={today}
+              locale={locale}
+              showDecimals={money.showDecimals}
+              currency={displayCurrency}
+            />
+            <CalendarEntryCard />
+          </View>
         );
       case "top_categories":
         return insights.categories.length > 0 ? (
