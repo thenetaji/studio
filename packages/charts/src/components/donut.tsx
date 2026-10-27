@@ -1,8 +1,10 @@
 import {
   Canvas,
   Circle,
+  LinearGradient,
   Path,
   Skia,
+  vec,
   type SkPath,
 } from "@shopify/react-native-skia";
 import * as React from "react";
@@ -53,6 +55,18 @@ const POP = 5;
 /** Visible gap between neighbouring segments, in points at the ring's mid radius. */
 const GAP_PT = 2;
 const SWEEP_MS = 700;
+
+/** Mixes `#RRGGBB` toward white (`amount` > 0) or black (< 0). */
+function shade(hex: string, amount: number): string {
+  const h = hex.replace("#", "");
+  const target = amount > 0 ? 255 : 0;
+  const t = Math.abs(amount);
+  const ch = (i: number) =>
+    Math.round(parseInt(h.slice(i, i + 2), 16) * (1 - t) + target * t)
+      .toString(16)
+      .padStart(2, "0");
+  return `#${ch(0)}${ch(2)}${ch(4)}`;
+}
 const DIM = 0.3;
 
 type SegmentProps = {
@@ -63,6 +77,10 @@ type SegmentProps = {
   selected: boolean;
   dimmed: boolean;
   grow: ReturnType<typeof useGrow>;
+  /** Canvas size; set with `metallic` so the sheen spans the whole ring. */
+  size: number;
+  /** Polished-metal sheen: light falls from the top left across every segment. */
+  metallic: boolean;
 };
 
 function Segment({
@@ -73,6 +91,8 @@ function Segment({
   selected,
   dimmed,
   grow,
+  size,
+  metallic,
 }: SegmentProps) {
   const reduced = useReducedMotion();
   const pop = useSharedValue(0);
@@ -106,7 +126,16 @@ function Segment({
       opacity={opacity}
       start={0}
       end={end}
-    />
+    >
+      {metallic ? (
+        <LinearGradient
+          start={vec(0, 0)}
+          end={vec(size, size)}
+          colors={[shade(color, 0.28), color, shade(color, -0.32)]}
+          positions={[0, 0.5, 1]}
+        />
+      ) : null}
+    </Path>
   );
 }
 
@@ -118,7 +147,8 @@ function Donut({
   emptyLabel,
   size = 216,
 }: DonutProps) {
-  const { colors } = useTokens();
+  const { colors, isDark, categoryMode } = useTokens();
+  const metallic = isDark && categoryMode === "mono";
   const grow = useGrow(SWEEP_MS);
   const reduced = useReducedMotion();
   // Period change: same ring sweeps in again. Selection changes do not touch `signature`.
@@ -232,6 +262,8 @@ function Donut({
                   selected={i === selectedIndex}
                   dimmed={selectedIndex >= 0 && i !== selectedIndex}
                   grow={grow}
+                  size={size}
+                  metallic={metallic}
                 />
               ))
             )}
@@ -261,7 +293,9 @@ function Donut({
               variant="title1"
               numeric
               numberOfLines={1}
-              style={{ color: shown.color }}
+              style={{
+                color: categoryMode === "mono" ? colors.text : shown.color,
+              }}
             >
               {shown.percentLabel}
             </Text>

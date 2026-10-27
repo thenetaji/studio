@@ -14,6 +14,10 @@ All notable changes to Finance. The format follows [Keep a Changelog](https://ke
 - Spending calendar with bills due and no-spend days, plus your current and best no-spend streak.
 
 ### Changed
+- New look. Pick it in Settings → Appearance: System (clean white and black, like Apple's own apps; the new default), Titanium (graphite and brushed metal, made for dark mode) or Paper (the original warm look). Ink is the new default accent; Blue and Titanium join the others.
+- Mono by default: categories, icons and charts in shades of grey, told apart by symbol and lightness, with an ink accent. Colour is reserved for money that means something: income, spending and budgets that are over. Prefer colour? Settings → Appearance → Categories → Colour.
+- Icons are SF Symbols by default, in ink on neutral tiles. Soft tints, colour tiles (like iOS Settings) and symbols only are in Settings → Appearance → Icon tiles.
+- Amounts use SF Pro Rounded, as in Wallet and Fitness.
 - Settings opens with a summary card and groups rows into Money, Preferences, Appearance, Privacy and alerts, and Data.
 - The Insights tab icon is a bar chart.
 - Category rows show their group and how many transactions they hold.

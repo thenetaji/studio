@@ -160,15 +160,16 @@ export default function InsightsScreen() {
   const breakdown = useBreakdown(period, kind, by, scope);
   const byCategory = by === "category";
   const { currency } = insights;
-  const { scheme } = useTokens();
+  const { scheme, category } = useTokens();
   const fmt = React.useMemo(
     () => ({
       currency,
       locale: money.locale,
       showDecimals: money.showDecimals,
       scheme,
+      palette: category,
     }),
-    [currency, money.locale, money.showDecimals, scheme],
+    [currency, money.locale, money.showDecimals, scheme, category],
   );
 
   // One read of raw lines feeds the category trends, the comparison, payees and the monthly cash flow.

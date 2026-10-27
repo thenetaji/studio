@@ -51,7 +51,7 @@ export function breakdownDonut(
     value: s.amount,
     amountLabel: amountLabel(s.amount),
     percentLabel: `${s.percent}%`,
-    color: categoryColors[fmt.scheme][asColorKey(s.color)],
+    color: (fmt.palette ?? categoryColors[fmt.scheme])[asColorKey(s.color)],
   }));
   if (rest.length > 0) {
     const amount = rest.reduce((sum, s) => sum + s.amount, 0);
@@ -62,7 +62,7 @@ export function breakdownDonut(
       value: amount,
       amountLabel: amountLabel(amount),
       percentLabel: `${percent}%`,
-      color: categoryColors[fmt.scheme].gray,
+      color: (fmt.palette ?? categoryColors[fmt.scheme]).gray,
     });
   }
   return data;

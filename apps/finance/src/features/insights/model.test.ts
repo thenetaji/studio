@@ -60,7 +60,7 @@ describe("insights model", () => {
     });
     expect(data.map((d) => d.name)).toEqual(["A", "B", "Other"]);
     expect(data[0]?.amountLabel).toBe("₹5");
-    expect(data[2]?.color).toBe("#7D7A75");
+    expect(data[2]?.color).toBe("#8E8E93");
   });
   it("folds categories beyond the sixth into Other", () => {
     const many = Array.from({ length: 8 }, (_, i) => ({

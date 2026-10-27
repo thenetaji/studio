@@ -1,10 +1,10 @@
 import * as Slot from "@rn-primitives/slot";
 import { cva } from "class-variance-authority";
 import * as React from "react";
-import { Text as RNText } from "react-native";
+import { Platform, Text as RNText } from "react-native";
 
 import { cn } from "../../lib/utils";
-import { dynamicType, type TypeVariant } from "@studio/theme";
+import { dynamicType, roundedFamily, type TypeVariant } from "@studio/theme";
 
 const variantClass: Record<TypeVariant, string> = {
   display: "text-[54px] leading-[60px] font-bold tracking-[-2.4px]",
@@ -50,6 +50,10 @@ const multiplier: Partial<Record<TypeVariant, number>> = {
 
 const TextClassContext = React.createContext<string | undefined>(undefined);
 
+/** Amounts use SF Pro Rounded on iOS, as Wallet and Fitness do; elsewhere the system face. */
+const ROUNDED =
+  Platform.OS === "ios" ? { fontFamily: roundedFamily } : undefined;
+
 type TextProps = React.ComponentProps<typeof RNText> & {
   variant?: TypeVariant;
   tone?: TextTone;
@@ -64,6 +68,7 @@ function Text({
   tone,
   numeric = false,
   maxFontSizeMultiplier,
+  style,
   ...props
 }: TextProps) {
   const inherited = React.useContext(TextClassContext);
@@ -81,6 +86,7 @@ function Text({
         numeric && "tabular-nums",
         className,
       )}
+      style={numeric && ROUNDED ? [ROUNDED, style] : style}
       {...props}
     />
   );

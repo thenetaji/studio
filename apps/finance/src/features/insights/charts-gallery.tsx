@@ -12,7 +12,7 @@ import {
 import { Card, Text } from "@studio/ui";
 import { addDays } from "@studio/dates";
 import { formatMoney } from "@studio/money";
-import { categoryColors, useTokens } from "@studio/theme";
+import { useTokens } from "@studio/theme";
 
 const rupees = (n: number) => Math.round(n * 100);
 const INR = { currency: "INR", locale: "en-IN" } as const;
@@ -27,8 +27,7 @@ function Label({ children }: { children: string }) {
 
 /** Chart components with sample data, for the dev gallery. */
 export default function ChartsGallery() {
-  const { scheme } = useTokens();
-  const palette = categoryColors[scheme];
+  const { category: palette } = useTokens();
   const [donutKey, setDonutKey] = React.useState<string | null>("Groceries");
   const [bar, setBar] = React.useState<number | null>(6);
   const [mini, setMini] = React.useState(5);

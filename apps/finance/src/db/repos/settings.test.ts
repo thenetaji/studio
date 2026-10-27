@@ -20,6 +20,8 @@ describe("settings", () => {
       [
         "display_currency",
         "theme",
+        "palette",
+        "category_colors",
         "accent",
         "haptics",
         "show_decimals",
@@ -131,8 +133,8 @@ describe("feature settings", () => {
   it("have typed defaults", () => {
     const db = createTestDb();
     expect(getAllSettings(db)).toMatchObject({
-      icon_style: "phosphor-duotone",
-      icon_background: "graphite-glyph",
+      icon_style: "sf",
+      icon_background: "mono",
       hide_amounts: false,
       reminder_daily_enabled: false,
       reminder_daily_time: "21:00",
@@ -175,8 +177,8 @@ describe("feature settings", () => {
         { key: "reminder_daily_time", value: '"25:99"' },
       ])
       .run();
-    expect(getSetting(db, "icon_style")).toBe("phosphor-duotone");
-    expect(getSetting(db, "icon_background")).toBe("graphite-glyph");
+    expect(getSetting(db, "icon_style")).toBe("sf");
+    expect(getSetting(db, "icon_background")).toBe("mono");
     expect(getSetting(db, "sync_provider")).toBe("none");
     expect(getSetting(db, "reminder_daily_time")).toBe("21:00");
   });

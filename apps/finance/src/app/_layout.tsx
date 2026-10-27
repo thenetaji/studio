@@ -21,6 +21,8 @@ import {
   applyThemePreference,
   followWebColorScheme,
   setAccent,
+  setPalette,
+  setCategoryMode,
   useTokens,
 } from "@studio/theme";
 
@@ -115,6 +117,8 @@ function Navigator() {
   const { colors } = useTokens();
   const [theme] = useSetting("theme");
   const [accent] = useSetting("accent");
+  const [palette] = useSetting("palette");
+  const [categoryColors] = useSetting("category_colors");
   const [haptics] = useSetting("haptics");
   const [onboardingDone] = useSetting("onboarding_done");
 
@@ -124,6 +128,12 @@ function Navigator() {
   useEffect(() => {
     setAccent(accent);
   }, [accent]);
+  useEffect(() => {
+    setPalette(palette);
+  }, [palette]);
+  useEffect(() => {
+    setCategoryMode(categoryColors);
+  }, [categoryColors]);
   useEffect(() => {
     setHapticsEnabled(haptics);
   }, [haptics]);

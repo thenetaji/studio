@@ -64,7 +64,8 @@ export function iconXml(
   secondary?: string,
   secondaryOpacity?: number,
 ): string {
-  const svgStyle: SvgIconStyle = style === "sf" ? "phosphor-duotone" : style;
+  // Off iOS, SF Symbols fall back to the filled set, the closest in weight and shape.
+  const svgStyle: SvgIconStyle = style === "sf" ? "phosphor-fill" : style;
   const key = `${svgStyle}|${id}|${secondary ?? ""}|${secondaryOpacity ?? ""}`;
   const hit = cache.get(key);
   if (hit) return hit;

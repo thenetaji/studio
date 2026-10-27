@@ -13,7 +13,7 @@ import {
   type Option,
 } from "@studio/ui";
 import { useAccounts, useEntryCount, useSetting } from "@/data/hooks";
-import { AppIcon, ICON_STYLE_LABELS } from "@studio/icons";
+import { AppIcon } from "@studio/icons";
 import { pressScale, useTokens } from "@studio/theme";
 import { ordinal } from "@/features/budgets/logic";
 import { moneyLocale } from "@/features/transactions/use-money-context";
@@ -34,7 +34,12 @@ const monthOptions: readonly Option<number>[] = Array.from(
   (_, i) => ({ value: i + 1, label: ordinal(i + 1) }),
 );
 
-const THEME_LABELS = { system: "System", light: "Light", dark: "Dark" };
+const THEME_LABELS = { system: "Auto", light: "Light", dark: "Dark" };
+const PALETTE_LABELS = {
+  system: "System",
+  titanium: "Titanium",
+  paper: "Paper",
+};
 
 const plural = (n: number, one: string, many: string) =>
   `${n.toLocaleString()} ${n === 1 ? one : many}`;
@@ -91,7 +96,7 @@ export default function Settings() {
   const [defaultAccountId, setDefaultAccountId] =
     useSetting("default_account_id");
   const [theme] = useSetting("theme");
-  const [iconStyle] = useSetting("icon_style");
+  const [palette] = useSetting("palette");
   const [haptics, setHaptics] = useSetting("haptics");
   const [showDecimals, setShowDecimals] = useSetting("show_decimals");
   const [lockEnabled] = useSetting("lock_enabled");
@@ -200,9 +205,9 @@ export default function Settings() {
 
       <ListGroup header="Appearance">
         <ListRow
-          label="Theme and icons"
+          label="Appearance"
           icon={{ name: "paintbrush.fill", color: "purple" }}
-          value={`${THEME_LABELS[theme]} · ${ICON_STYLE_LABELS[iconStyle].label}`}
+          value={`${PALETTE_LABELS[palette]} · ${THEME_LABELS[theme]}`}
           chevron
           onPress={() => router.push("/settings/appearance")}
         />

@@ -39,7 +39,14 @@ export type SemanticColors = {
   overlayText: string;
 };
 
-export type AccentPresetKey = "brass" | "slate" | "sage" | "copper" | "ivory";
+export type AccentPresetKey =
+  | "blue"
+  | "titanium"
+  | "brass"
+  | "slate"
+  | "sage"
+  | "copper"
+  | "ivory";
 
 /** The accent is one token group: fill, link text, soft tint, text on the fill, pressed fill. */
 export type AccentColors = Pick<
@@ -51,6 +58,40 @@ export const accentPresets: Record<
   AccentPresetKey,
   Record<Scheme, AccentColors>
 > = {
+  // Apple system blue: the accessible light variant for text, the system tint for fills.
+  blue: {
+    light: {
+      accent: "#007AFF",
+      accentText: "#0066D6",
+      accentSoft: "rgba(0,122,255,0.12)",
+      onAccent: "#FFFFFF",
+      accentDeep: "#0062CC",
+    },
+    dark: {
+      accent: "#0A84FF",
+      accentText: "#409CFF",
+      accentSoft: "rgba(10,132,255,0.18)",
+      onAccent: "#FFFFFF",
+      accentDeep: "#0071E3",
+    },
+  },
+  // Natural titanium: a warm metallic grey, brighter in dark mode where it is the hero.
+  titanium: {
+    light: {
+      accent: "#7D766C",
+      accentText: "#635D55",
+      accentSoft: "rgba(125,118,108,0.14)",
+      onAccent: "#FFFFFF",
+      accentDeep: "#6B655C",
+    },
+    dark: {
+      accent: "#CFC8BC",
+      accentText: "#CFC8BC",
+      accentSoft: "rgba(207,200,188,0.14)",
+      onAccent: "#141311",
+      accentDeep: "#B3AB9E",
+    },
+  },
   brass: {
     light: {
       accent: "#C69E58",
@@ -115,67 +156,150 @@ export const accentPresets: Record<
       accentDeep: "#BC856D",
     },
   },
+  // Ink: black on light, white on dark. The mono accent.
   ivory: {
     light: {
-      accent: "#161310",
-      accentText: "#161310",
-      accentSoft: "rgba(22,19,16,0.08)",
-      onAccent: "#F5F3EF",
-      accentDeep: "#3A362F",
+      accent: "#1C1C1E",
+      accentText: "#1C1C1E",
+      accentSoft: "rgba(28,28,30,0.08)",
+      onAccent: "#FFFFFF",
+      accentDeep: "#3A3A3C",
     },
     dark: {
-      accent: "#F1EEE6",
-      accentText: "#A4A19B",
-      accentSoft: "rgba(241,238,230,0.12)",
-      onAccent: "#0B0A08",
-      accentDeep: "#CFCBC1",
+      accent: "#F2F2F7",
+      accentText: "#E5E5EA",
+      accentSoft: "rgba(242,242,247,0.12)",
+      onAccent: "#000000",
+      accentDeep: "#D1D1D6",
     },
   },
 };
 
 /** Default accent; `setAccent` re-skins at runtime. global.css `--tint*` mirror this default. */
-export const accentPreset: AccentPresetKey = "brass";
+export const accentPreset: AccentPresetKey = "ivory";
 
-const base: Record<Scheme, Omit<SemanticColors, keyof AccentColors>> = {
-  light: {
-    bg: "#F5F3EF",
-    surface: "#FFFFFF",
-    elevated: "#FFFFFF",
-    border: "rgba(22,19,16,0.07)",
-    separator: "rgba(22,19,16,0.07)",
-    text: "#161310",
-    textSecondary: "#66635D",
-    textTertiary: "#9B9891",
-    income: "#048B56",
-    expense: "#C92F36",
-    warning: "#C9690C",
-    fill: "#EAE8E3",
-    overlay: "#161310",
-    overlayText: "#F5F3EF",
+/** The surface family: every non-accent token. `setPalette` switches it at runtime. */
+export type PaletteKey = "system" | "titanium" | "paper";
+
+export type PaletteColors = Omit<SemanticColors, keyof AccentColors>;
+
+/** Default palette; global.css mirrors it. */
+export const palettePreset: PaletteKey = "system";
+
+export const palettes: Record<PaletteKey, Record<Scheme, PaletteColors>> = {
+  // Apple's own apps (Wallet, Health): grouped grey background, white cards, system label greys.
+  system: {
+    light: {
+      bg: "#F2F2F7",
+      surface: "#FFFFFF",
+      elevated: "#FFFFFF",
+      border: "rgba(60,60,67,0.12)",
+      separator: "rgba(60,60,67,0.18)",
+      text: "#000000",
+      textSecondary: "#6C6C70",
+      textTertiary: "#A1A1A6",
+      income: "#248A3D",
+      expense: "#D70015",
+      warning: "#C93400",
+      fill: "#E9E9EE",
+      overlay: "#1C1C1E",
+      overlayText: "#FFFFFF",
+    },
+    dark: {
+      bg: "#000000",
+      surface: "#1C1C1E",
+      elevated: "#2C2C2E",
+      border: "rgba(84,84,88,0.36)",
+      separator: "rgba(84,84,88,0.5)",
+      text: "#FFFFFF",
+      textSecondary: "#98989F",
+      textTertiary: "#636366",
+      income: "#30D158",
+      expense: "#FF453A",
+      warning: "#FF9F0A",
+      fill: "#2C2C2E",
+      overlay: "#F2F2F7",
+      overlayText: "#000000",
+    },
   },
-  dark: {
-    bg: "#000000",
-    surface: "#100F0D",
-    elevated: "#191816",
-    border: "rgba(255,255,255,0.07)",
-    separator: "rgba(255,255,255,0.06)",
-    text: "#F8F7F2",
-    textSecondary: "#A4A19B",
-    textTertiary: "#686660",
-    income: "#64D8A4",
-    expense: "#F66C6D",
-    warning: "#FA9947",
-    fill: "#1E1D1A",
-    overlay: "#F5F3EF",
-    overlayText: "#161310",
+  // Titanium: graphite and brushed-metal greys, made for dark mode first.
+  titanium: {
+    light: {
+      bg: "#E8E7E4",
+      surface: "#F8F8F6",
+      elevated: "#FFFFFF",
+      border: "rgba(40,38,34,0.1)",
+      separator: "rgba(40,38,34,0.14)",
+      text: "#1D1D1F",
+      textSecondary: "#6E6C68",
+      textTertiary: "#A09D97",
+      income: "#2E7D4F",
+      expense: "#C4302B",
+      warning: "#B9580D",
+      fill: "#DCDAD5",
+      overlay: "#1D1D1F",
+      overlayText: "#F5F5F7",
+    },
+    dark: {
+      bg: "#0B0B0C",
+      surface: "#18181A",
+      elevated: "#232325",
+      border: "rgba(232,226,214,0.08)",
+      separator: "rgba(232,226,214,0.1)",
+      text: "#F5F5F7",
+      textSecondary: "#A3A09A",
+      textTertiary: "#6A6864",
+      income: "#5FD39A",
+      expense: "#FF6961",
+      warning: "#FFB04A",
+      fill: "#26262A",
+      overlay: "#F5F5F7",
+      overlayText: "#1D1D1F",
+    },
+  },
+  // The original warm paper and black.
+  paper: {
+    light: {
+      bg: "#F5F3EF",
+      surface: "#FFFFFF",
+      elevated: "#FFFFFF",
+      border: "rgba(22,19,16,0.07)",
+      separator: "rgba(22,19,16,0.07)",
+      text: "#161310",
+      textSecondary: "#66635D",
+      textTertiary: "#9B9891",
+      income: "#048B56",
+      expense: "#C92F36",
+      warning: "#C9690C",
+      fill: "#EAE8E3",
+      overlay: "#161310",
+      overlayText: "#F5F3EF",
+    },
+    dark: {
+      bg: "#000000",
+      surface: "#100F0D",
+      elevated: "#191816",
+      border: "rgba(255,255,255,0.07)",
+      separator: "rgba(255,255,255,0.06)",
+      text: "#F8F7F2",
+      textSecondary: "#A4A19B",
+      textTertiary: "#686660",
+      income: "#64D8A4",
+      expense: "#F66C6D",
+      warning: "#FA9947",
+      fill: "#1E1D1A",
+      overlay: "#F5F3EF",
+      overlayText: "#161310",
+    },
   },
 };
 
 export function buildColors(
   scheme: Scheme,
   preset: AccentPresetKey = accentPreset,
+  palette: PaletteKey = palettePreset,
 ): SemanticColors & { accentDeep: string } {
-  return { ...base[scheme], ...accentPresets[preset][scheme] };
+  return { ...palettes[palette][scheme], ...accentPresets[preset][scheme] };
 }
 
 export const colors: Record<Scheme, SemanticColors & { accentDeep: string }> = {
@@ -186,6 +310,8 @@ export const colors: Record<Scheme, SemanticColors & { accentDeep: string }> = {
 export type ThemeOverrides = {
   /** Switch to another built-in accent preset. */
   accentPreset?: AccentPresetKey;
+  /** Switch the surface palette. */
+  palette?: PaletteKey;
   /** Or supply the app's own accent group per scheme (wins over `accentPreset`). */
   accent?: Record<Scheme, AccentColors>;
 };
@@ -200,6 +326,8 @@ export function configureTheme(overrides: ThemeOverrides): void {
     const accent =
       overrides.accent?.[scheme] ??
       accentPresets[overrides.accentPreset ?? accentPreset][scheme];
+    if (overrides.palette)
+      Object.assign(colors[scheme], palettes[overrides.palette][scheme]);
     Object.assign(colors[scheme], accent);
   }
 }
@@ -210,58 +338,98 @@ export const incomeSoft: Record<Scheme, string> = {
   dark: "rgba(100,216,164,0.12)",
 };
 
-/** Data colours for charts and swatches: `lit` on black, `light-data` on paper. */
+/**
+ * Data colours for charts and swatches: Apple's system hues, softened about a quarter so a screen of categories
+ * reads calm rather than neon. The dark set is lighter, not brighter. Every light mark holds 3:1 on white.
+ */
 export const categoryColors: Record<
   Scheme,
   Record<CategoryColorKey, string>
 > = {
   light: {
-    red: "#B34C4D",
-    orange: "#AE5517",
-    amber: "#AE7C04",
-    lime: "#7A8A10",
-    green: "#238744",
-    teal: "#008478",
-    cyan: "#007E9C",
-    blue: "#3672BE",
-    indigo: "#6765BD",
-    purple: "#8759AD",
-    pink: "#A74D83",
-    brown: "#826144",
-    gray: "#7D7A75",
+    red: "#E5534B",
+    orange: "#E8893A",
+    amber: "#D29A17",
+    lime: "#86AA30",
+    green: "#36A865",
+    teal: "#349FB2",
+    cyan: "#3F9ACF",
+    blue: "#3B78E0",
+    indigo: "#6261C4",
+    purple: "#965FCB",
+    pink: "#DB5880",
+    brown: "#9C8061",
+    gray: "#8E8E93",
   },
   dark: {
-    red: "#FE8A88",
-    orange: "#F7945A",
-    amber: "#F3B94C",
-    lime: "#B6CA59",
-    green: "#73C786",
-    teal: "#56C7B8",
-    cyan: "#54C1E3",
-    blue: "#7CB4FE",
-    indigo: "#A5A7FE",
-    purple: "#CA98F5",
-    pink: "#EF8BC5",
-    brown: "#C7A384",
-    gray: "#A19E99",
+    red: "#EF6B63",
+    orange: "#F09A52",
+    amber: "#E6BA4A",
+    lime: "#A3C75C",
+    green: "#58C482",
+    teal: "#5DBCCC",
+    cyan: "#6BB6E4",
+    blue: "#6297EF",
+    indigo: "#8A88DF",
+    purple: "#B386E0",
+    pink: "#EA7C9D",
+    brown: "#B79B7B",
+    gray: "#98989D",
   },
 };
 
-/** Solid tile fill (same in both schemes); white glyph on top. */
+/** How categories are drawn: mono (greys told apart by lightness, the default) or colour. */
+export type CategoryMode = "mono" | "colour";
+
+/**
+ * Mono category greys. Each key keeps one fixed step (colour follows the entity, never its rank), and the steps
+ * are spread so neighbouring keys differ in lightness. Light steps hold 3:1 on white; dark steps on #1C1C1E.
+ */
+const MONO_STEPS: Record<CategoryColorKey, number> = {
+  red: 0,
+  orange: 2,
+  amber: 4,
+  lime: 1,
+  green: 3,
+  teal: 5,
+  cyan: 1,
+  blue: 0,
+  indigo: 3,
+  purple: 2,
+  pink: 4,
+  brown: 5,
+  gray: 3,
+};
+const MONO_RAMP: Record<Scheme, readonly string[]> = {
+  light: ["#1C1C1E", "#3A3A3C", "#525256", "#67676B", "#7A7A7E", "#8E8E93"],
+  // Platinum to graphite with a faint warmth, like brushed titanium.
+  dark: ["#ECEAE6", "#CBC8C2", "#ABA8A2", "#8E8C88", "#73726F", "#5B5B5E"],
+};
+const monoFor = (scheme: Scheme) =>
+  Object.fromEntries(
+    categoryKeys.map((key) => [key, MONO_RAMP[scheme][MONO_STEPS[key]]!]),
+  ) as Record<CategoryColorKey, string>;
+
+export const monoCategoryColors: Record<
+  Scheme,
+  Record<CategoryColorKey, string>
+> = { light: monoFor("light"), dark: monoFor("dark") };
+
+/** Solid tile fill (same in both schemes), as on iOS Settings icons; white glyph on top. */
 export const categoryInk: Record<CategoryColorKey, string> = {
-  red: "#C6484C",
-  orange: "#CD6108",
-  amber: "#BE8700",
-  lime: "#859700",
-  green: "#009241",
-  teal: "#008C80",
-  cyan: "#0786A5",
-  blue: "#2E78D5",
-  indigo: "#6D68D3",
-  purple: "#935AC0",
-  pink: "#B74A8E",
-  brown: "#917257",
-  gray: "#65635F",
+  red: "#E5534B",
+  orange: "#E8893A",
+  amber: "#D29A17",
+  lime: "#86AA30",
+  green: "#36A865",
+  teal: "#349FB2",
+  cyan: "#3F9ACF",
+  blue: "#3B78E0",
+  indigo: "#6261C4",
+  purple: "#965FCB",
+  pink: "#DB5880",
+  brown: "#9C8061",
+  gray: "#8E8E93",
 };
 
 export const spacing = {
@@ -310,6 +478,9 @@ export const typeScale = {
 
 export type TypeVariant = keyof typeof typeScale;
 
+/** SF Pro Rounded on iOS (as in Wallet and Fitness) for amounts; other platforms keep their system face. */
+export const roundedFamily = "ui-rounded";
+
 export const durations = {
   press: 120,
   chip: 200,
@@ -335,7 +506,7 @@ export const pressOpacity = { text: 0.6 } as const;
 
 export const shadows = {
   fab: {
-    shadowColor: "#DEC084",
+    shadowColor: "#000000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 14,
