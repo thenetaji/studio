@@ -18,12 +18,12 @@ const SECTION_ICONS: Record<
   { name: string; color: CategoryColorKey }
 > = {
   quick_add: { name: "add", color: "purple" },
-  stats: { name: "wallet", color: "purple" },
   pockets: { name: "savings", color: "purple" },
-  coming_up: { name: "calendar", color: "purple" },
-  heatmap: { name: "grid", color: "purple" },
+  budgets: { name: "budgets", color: "purple" },
+  bills: { name: "calendar", color: "purple" },
   top_categories: { name: "tag", color: "purple" },
   recent: { name: "activity", color: "purple" },
+  heatmap: { name: "grid", color: "purple" },
 };
 
 function MoveButton({

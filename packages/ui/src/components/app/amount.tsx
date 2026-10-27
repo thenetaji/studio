@@ -2,6 +2,7 @@ import { Text, type TextTone } from "../ui/text";
 import { AnimatedNumber } from "./animated-number";
 import { cn } from "../../lib/utils";
 import { dynamicType } from "@studio/theme";
+import { HIDDEN_LABEL, maskIf, useAmountsHidden } from "./amount-privacy";
 
 type AmountVariant = "row" | "title" | "hero" | "entry";
 
@@ -42,17 +43,20 @@ function Amount({
   className,
   animate = false,
 }: AmountProps) {
+  const hidden = useAmountsHidden();
+  const shown = maskIf(hidden, value);
+  const label = hidden ? HIDDEN_LABEL : accessibilityLabel;
   const config = variantProps[variant];
   const fit = variant === "hero" || variant === "entry";
   if (animate) {
     return (
       <AnimatedNumber
-        value={value}
+        value={shown}
         variant={config.variant}
         tone={tone}
         fit={fit}
         intro={animate === "intro"}
-        accessibilityLabel={accessibilityLabel}
+        accessibilityLabel={label}
         className={cn(config.className, className)}
       />
     );
@@ -66,10 +70,10 @@ function Amount({
       adjustsFontSizeToFit={fit}
       minimumFontScale={variant === "hero" ? 28 / 36 : 32 / 44}
       maxFontSizeMultiplier={config.multiplier}
-      accessibilityLabel={accessibilityLabel}
+      accessibilityLabel={label}
       className={cn(config.className, className)}
     >
-      {value}
+      {shown}
     </Text>
   );
 }

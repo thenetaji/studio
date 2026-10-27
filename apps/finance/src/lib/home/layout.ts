@@ -1,12 +1,12 @@
 /** Home sections the owner can reorder and hide. The hero (greeting, amount, chart) always stays on top. */
 export const HOME_SECTION_IDS = [
   "quick_add",
-  "stats",
   "pockets",
-  "coming_up",
-  "heatmap",
+  "budgets",
+  "bills",
   "top_categories",
   "recent",
+  "heatmap",
 ] as const;
 
 export type HomeSectionId = (typeof HOME_SECTION_IDS)[number];
@@ -18,12 +18,12 @@ export interface HomeSectionPref {
 
 export const HOME_SECTION_LABELS: Record<HomeSectionId, string> = {
   quick_add: "Quick add",
-  stats: "Summary",
   pockets: "Pocket money",
-  coming_up: "Coming up",
-  heatmap: "Spending heatmap",
+  budgets: "Budgets",
+  bills: "Upcoming bills",
   top_categories: "Top categories",
   recent: "Recent",
+  heatmap: "Spending heatmap",
 };
 
 export const DEFAULT_HOME_LAYOUT: readonly HomeSectionPref[] =
@@ -35,7 +35,17 @@ const isSectionId = (value: unknown): value is HomeSectionId =>
 
 /** Sections added in a later build that should land after a given section instead of at the end. */
 const INSERT_AFTER: Partial<Record<HomeSectionId, HomeSectionId>> = {
-  pockets: "stats",
+  pockets: "quick_add",
+};
+
+/**
+ * Stored ids from earlier builds and what replaced them, in place and with the same visibility: "Coming up" (next
+ * bill and overall budget) became the Budgets and Upcoming bills cards. "Summary" (Earned, Daily avg, Balance) moved
+ * into the hero, so it maps to nothing.
+ */
+const RENAMED: Record<string, readonly HomeSectionId[]> = {
+  coming_up: ["budgets", "bills"],
+  stats: [],
 };
 
 /**
@@ -47,13 +57,18 @@ export function normalizeHomeLayout(value: unknown): HomeSectionPref[] {
   const seen = new Set<HomeSectionId>();
   if (Array.isArray(value)) {
     for (const entry of value) {
-      const id = (entry as { id?: unknown } | null)?.id;
-      if (!isSectionId(id) || seen.has(id)) continue;
-      seen.add(id);
-      out.push({
-        id,
-        visible: (entry as { visible?: unknown }).visible !== false,
-      });
+      const raw = (entry as { id?: unknown } | null)?.id;
+      const visible =
+        (entry as { visible?: unknown } | null)?.visible !== false;
+      const ids =
+        typeof raw === "string" && raw in RENAMED
+          ? (RENAMED[raw] ?? [])
+          : [raw];
+      for (const id of ids) {
+        if (!isSectionId(id) || seen.has(id)) continue;
+        seen.add(id);
+        out.push({ id, visible });
+      }
     }
   }
   for (const id of HOME_SECTION_IDS) {

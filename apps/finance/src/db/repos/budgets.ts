@@ -1,5 +1,15 @@
-import { asc, eq, inArray, isNull } from "drizzle-orm";
 import {
+  and,
+  asc,
+  between,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  lte,
+} from "drizzle-orm";
+import {
+  addDays,
   periodFor,
   weekRange,
   yearRange,
@@ -7,11 +17,16 @@ import {
   type Period,
 } from "@studio/dates";
 import { sumLines, type ConversionContext } from "@/lib/insights";
+import { rolloverCarry } from "@/lib/budgets/rollover";
+import { occurrencesBetween } from "@/lib/recurring";
+import { convertWithRates, type RateLookup } from "@studio/money";
 import { ValidationError } from "../errors";
 import { newId } from "@studio/data";
 import {
   budgetCategories,
   budgets,
+  recurringRules,
+  transactions,
   type BudgetPeriod,
   type BudgetRow,
   type BudgetScope,
@@ -29,6 +44,8 @@ export interface BudgetInput {
   startAnchor: number;
   scope: BudgetScope;
   categoryIds?: readonly string[];
+  /** Carry the previous period's leftover (or overspend) into the next. Off by default. */
+  rollover?: boolean;
 }
 
 export interface Budget extends BudgetRow {
@@ -133,6 +150,7 @@ export function createBudget(
       period: input.period,
       startAnchor: input.startAnchor,
       scope: input.scope,
+      rollover: input.rollover ?? false,
       archivedAt: null,
       createdAt: now,
       updatedAt: now,
@@ -161,6 +179,7 @@ export function updateBudget(
         period: input.period,
         startAnchor: input.startAnchor,
         scope: input.scope,
+        ...(input.rollover === undefined ? {} : { rollover: input.rollover }),
         updatedAt: now,
       })
       .where(eq(budgets.id, id))
@@ -215,7 +234,23 @@ export interface BudgetSpent {
   period: Period;
   /** In the budget's currency. */
   spent: number;
+  /** Rollover from earlier periods (negative after an overspend); 0 when rollover is off. */
+  carried: number;
+  /** The amount plus the carry: what this period may spend. */
+  available: number;
+  /** Recurring expenses in scope still due in this period (not yet posted); 0 for a past period. */
+  upcoming: number;
+  /** Part of `spent` posted by recurring rules. */
+  recurringSpent: number;
+  /** `available - spent`; negative when over. */
   remaining: number;
+}
+
+function inScope(budget: Budget, categoryId: string | null): boolean {
+  return (
+    budget.scope === "all" ||
+    (categoryId !== null && budget.categoryIds.includes(categoryId))
+  );
 }
 
 /** Expense lines in the period within scope, split lines counted by their own category; transfers never count. */
@@ -225,23 +260,149 @@ export function budgetSpent(db: Db, budget: Budget, period: Period): number {
     displayCurrency: budget.currency,
     rates: getRateLookup(db),
   };
-  const scoped =
-    budget.scope === "all"
-      ? lines
-      : lines.filter(
-          (l) =>
-            l.categoryId !== null && budget.categoryIds.includes(l.categoryId),
-        );
+  const scoped = lines.filter((l) => inScope(budget, l.categoryId));
   return sumLines(scoped, "expense", period, ctx);
+}
+
+/** The budget's periods from the one it was created in up to (not including) `period`, oldest first. */
+export function periodsBefore(
+  budget: Pick<BudgetRow, "period" | "startAnchor" | "createdAt">,
+  period: Pick<Period, "from">,
+  limit = 520,
+): Period[] {
+  const out: Period[] = [];
+  let current = budgetPeriodFor(budget, toDateKey(budget.createdAt));
+  while (current.from < period.from && out.length < limit) {
+    out.push(current);
+    current = budgetPeriodFor(budget, addDays(current.to, 1));
+  }
+  return out;
+}
+
+/** Rollover carried into `period`: each earlier period's leftover, chained from the period the budget was created in. */
+export function budgetCarry(db: Db, budget: Budget, period: Period): number {
+  if (!budget.rollover) return 0;
+  const earlier = periodsBefore(budget, period);
+  const first = earlier[0];
+  const last = earlier[earlier.length - 1];
+  if (!first || !last) return 0;
+  const lines = spendLines(db, { from: first.from, to: last.to }).filter((l) =>
+    inScope(budget, l.categoryId),
+  );
+  const ctx: ConversionContext = {
+    displayCurrency: budget.currency,
+    rates: getRateLookup(db),
+  };
+  return rolloverCarry(
+    budget.amount,
+    earlier.map((p) => sumLines(lines, "expense", p, ctx)),
+  );
+}
+
+/** Expense rules in scope still due in the period, from `today` on (overdue unposted ones included); in the budget's currency. */
+export function budgetUpcoming(
+  db: Db,
+  budget: Budget,
+  period: Period,
+  today: string,
+  rates: RateLookup = getRateLookup(db),
+): number {
+  if (period.to < today) return 0;
+  const rules = db
+    .select()
+    .from(recurringRules)
+    .where(
+      and(
+        isNull(recurringRules.pausedAt),
+        eq(recurringRules.kind, "expense"),
+        lte(recurringRules.nextDue, period.to),
+      ),
+    )
+    .all();
+  let total = 0;
+  for (const rule of rules) {
+    if (!inScope(budget, rule.categoryId)) continue;
+    if (
+      rule.currency !== budget.currency &&
+      rates(rule.currency, budget.currency) === null
+    )
+      continue;
+    const dates = occurrencesBetween(rule, rule.nextDue, period.to, {
+      endDate: rule.endDate,
+      limit: 400,
+    }).filter((d) => d >= period.from);
+    total +=
+      dates.length *
+      convertWithRates(rule.amount, rule.currency, budget.currency, rates);
+  }
+  return total;
+}
+
+/** Expenses in the period that recurring rules posted, in scope and in the budget's currency. */
+export function budgetRecurringSpent(
+  db: Db,
+  budget: Budget,
+  period: Period,
+  rates: RateLookup = getRateLookup(db),
+): number {
+  const rows = db
+    .select({
+      amount: transactions.amount,
+      currency: transactions.currency,
+      categoryId: transactions.categoryId,
+    })
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.kind, "expense"),
+        isNotNull(transactions.recurringRuleId),
+        eq(transactions.isSplit, false),
+        between(transactions.dateKey, period.from, period.to),
+      ),
+    )
+    .all();
+  let total = 0;
+  for (const row of rows) {
+    if (!inScope(budget, row.categoryId)) continue;
+    if (
+      row.currency !== budget.currency &&
+      rates(row.currency, budget.currency) === null
+    )
+      continue;
+    total += convertWithRates(row.amount, row.currency, budget.currency, rates);
+  }
+  return total;
+}
+
+/** Everything a budget needs for one period: spend, carry, what is still due and what remains. */
+export function budgetProgress(
+  db: Db,
+  budget: Budget,
+  period: Period,
+  today: string,
+): BudgetSpent {
+  const rates = getRateLookup(db);
+  const spent = budgetSpent(db, budget, period);
+  const carried = budgetCarry(db, budget, period);
+  const available = budget.amount + carried;
+  return {
+    budget,
+    period,
+    spent,
+    carried,
+    available,
+    upcoming: budgetUpcoming(db, budget, period, today, rates),
+    recurringSpent: budgetRecurringSpent(db, budget, period, rates),
+    remaining: available - spent,
+  };
 }
 
 export function listBudgetProgress(
   db: Db,
   ref: string = toDateKey(Date.now()),
+  today: string = ref,
 ): BudgetSpent[] {
-  return listBudgets(db).map((budget) => {
-    const period = budgetPeriodFor(budget, ref);
-    const spent = budgetSpent(db, budget, period);
-    return { budget, period, spent, remaining: budget.amount - spent };
-  });
+  return listBudgets(db).map((budget) =>
+    budgetProgress(db, budget, budgetPeriodFor(budget, ref), today),
+  );
 }

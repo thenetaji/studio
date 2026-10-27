@@ -15,6 +15,7 @@ import { LockGate } from "@/features/lock/lock-gate";
 import { useSetting, usePostDueRecurring, useReminderSync } from "@/data/hooks";
 import { useIconPrefsSync } from "@/lib/icon-prefs-sync";
 import { DemoSeedGate } from "@/lib/demo-seed-gate";
+import { AmountsPrivacy } from "@/features/privacy/amounts-privacy";
 import {
   setHapticsEnabled,
   applyThemePreference,
@@ -249,7 +250,9 @@ export default function RootLayout() {
         <StatusBar style="auto" />
         <Database>
           <DemoSeedGate>
-            <Navigator />
+            <AmountsPrivacy>
+              <Navigator />
+            </AmountsPrivacy>
             <LockGate />
           </DemoSeedGate>
         </Database>

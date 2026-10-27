@@ -592,6 +592,8 @@ function seedDemoBudgets(
     name: string | undefined,
     amount: (spent: number) => number,
     categoryNames: string[],
+    /** Envelope rollover, started this many periods back so the demo carries something in. */
+    rolloverFrom?: number,
   ) => {
     const input = {
       name,
@@ -608,8 +610,17 @@ function seedDemoBudgets(
     const row = getBudget(db, draft.id);
     deleteBudget(db, draft.id);
     if (!row) return;
+    const rollover = rolloverFrom !== undefined;
     db.insert(budgets)
-      .values({ ...row, id, amount: rupees(amount(spent)) })
+      .values({
+        ...row,
+        id,
+        amount: rupees(amount(spent)),
+        rollover,
+        createdAt: rollover
+          ? keyToLocalMs(addMonths(today, -rolloverFrom), 12)
+          : row.createdAt,
+      })
       .run();
     if (row.categoryIds.length > 0)
       db.insert(budgetCategories)
@@ -632,6 +643,7 @@ function seedDemoBudgets(
     undefined,
     (spent) => roundTo(spent * 2 + 3000, 500),
     ["Groceries"],
+    2,
   );
   pinned(
     "demo-budget-transport",

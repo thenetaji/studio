@@ -54,6 +54,7 @@ export function BudgetsScreen() {
       startAnchor: found.startAnchor,
       scope: found.scope,
       categoryIds: found.categoryIds,
+      rollover: found.rollover,
     };
     actions.budgets.delete(id);
     showToast({

@@ -152,7 +152,7 @@ export async function onboard(page, base, code) {
 
 export async function seeded(page, base, mode) {
   await open(page, base, `/?seed=${mode}`);
-  // An empty install shows only the hero and the empty state (no Recent list, no stats strip).
+  // An empty install shows only the net worth hero and the empty state (no Recent list, no strip).
   await expectText(page, mode === "empty" ? "No transactions yet" : "Recent");
 }
 
@@ -268,10 +268,10 @@ export const flows = [
       await expectText(page, "€ EUR");
       await tap(page, "Start");
       await expectText(page, "No transactions yet");
-      // Empty Home: the hero reads zero in the chosen currency (the Balance strip appears with the first transaction).
-      await expectLabel(page, "Spent in ", { exact: false });
+      // Empty Home: the net worth hero reads zero in the chosen currency.
+      await expectLabel(page, "Net worth, ", { exact: false });
       assert.ok(
-        (await labelsOf(page)).some((l) => /^Spent in \w+, 0 euros$/.test(l)),
+        (await labelsOf(page)).some((l) => /^Net worth, €\s*0$/.test(l)),
         "hero should read zero euros",
       );
       assert.match(await body(page), /€\s*0/);
@@ -478,7 +478,7 @@ export const flows = [
     async run({ page, base }) {
       await seeded(page, base, "demo");
       const homeBalance = await page
-        .locator('[aria-label^="Balance, "]')
+        .locator('[aria-label^="Net worth, "]')
         .first()
         .getAttribute("aria-label");
       // Demo accounts carry extras (people, lending), so read the starting balances instead of hard-coding them.
@@ -491,7 +491,7 @@ export const flows = [
           l.match(/(-?[\d,]+(?:\.\d+)?) rupees$/)[1].replace(/,/g, ""),
         );
       };
-      await page.locator('[aria-label^="Balance, "]').first().tap();
+      await page.locator('[aria-label^="Net worth, "]').first().tap();
       await expectLabel(page, "HDFC Savings, Bank, ", { exact: false });
       const [hdfc0, cash0] = [
         await rupees("HDFC Savings"),
@@ -516,13 +516,13 @@ export const flows = [
       await sheetClosed(page);
       assert.equal(
         await page
-          .locator('[aria-label^="Balance, "]')
+          .locator('[aria-label^="Net worth, "]')
           .first()
           .getAttribute("aria-label"),
         homeBalance,
         "Home total changed after a transfer",
       );
-      await page.locator('[aria-label^="Balance, "]').first().tap();
+      await page.locator('[aria-label^="Net worth, "]').first().tap();
       await expectLabel(page, "HDFC Savings, Bank, ", { exact: false });
       assert.equal(
         await rupees("HDFC Savings"),
@@ -761,7 +761,7 @@ export const flows = [
       await page.locator('[aria-label^="EUR"]').first().tap();
       await tap(page, "Start");
       await expectText(page, "No transactions yet");
-      // The Balance strip only exists once there is a transaction: log a €10 expense so Home shows it.
+      // Log a €10 expense so the net worth moves below zero.
       await addExpense(page, {
         amount: "10",
         title: "Tea",
@@ -769,8 +769,8 @@ export const flows = [
       });
       await save(page);
       await sheetClosed(page);
-      await expectLabel(page, "Balance, −€10");
-      await page.locator('[aria-label^="Balance, "]:visible').first().tap();
+      await expectLabel(page, "Net worth, −€10");
+      await page.locator('[aria-label^="Net worth, "]:visible').first().tap();
       await page.locator('[aria-label="Add account"]:visible').tap();
       await page.locator('[aria-label="Name"]').waitFor();
       await page.locator('[aria-label="Name"]').fill("Dollars");
@@ -805,7 +805,7 @@ export const flows = [
       });
       await expectLabel(page, "Total, 80 euros");
       await goClient(page, "/");
-      await expectLabel(page, "Balance, €80");
+      await expectLabel(page, "Net worth, €80");
       // The rate lives in Settings > Currency too: changing it re-converts the total.
       await goClient(page, "/settings/currency");
       await expectText(page, "Exchange rates");
@@ -819,7 +819,7 @@ export const flows = [
       await rate.press("Enter");
       await rate.blur();
       await goClient(page, "/");
-      await expectLabel(page, "Balance, €40");
+      await expectLabel(page, "Net worth, €40");
     },
   },
   {
@@ -1145,8 +1145,8 @@ export const flows = [
       await tapText(page, "Daily");
       await save(page);
       await sheetClosed(page);
-      // Home surfaces the next bill under "Coming up"; the swipe actions live on the Recurring screen.
-      await expectText(page, "Coming up");
+      // Home surfaces the next bill under "Upcoming bills"; the swipe actions live on the Recurring screen.
+      await expectText(page, "Upcoming bills");
       await expectLabel(page, "Paper, Tomorrow, $100");
       await goClient(page, "/recurring");
       await expectText(page, "Rules");

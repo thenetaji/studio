@@ -92,3 +92,17 @@ export function dueIn(days: number): string {
   if (days === 1) return "Tomorrow";
   return `in ${days} days`;
 }
+
+/**
+ * Spent so far minus the reference at the same day (today is the last `actual` entry): negative when under the
+ * budget pace or last month. Null when either line is missing.
+ */
+export function paceDelta(
+  actual: readonly number[],
+  reference: readonly number[],
+): number | null {
+  if (actual.length === 0 || reference.length === 0) return null;
+  const today = actual.length - 1;
+  const ref = reference[Math.min(today, reference.length - 1)] ?? 0;
+  return (actual[today] ?? 0) - ref;
+}

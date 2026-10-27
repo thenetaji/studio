@@ -102,7 +102,10 @@ export function toUpcomingRow(
     accessibilityLabel: [
       spokenTitle,
       isTransfer ? "Transfer" : subtitle.replace(" · ", ", "),
-      formatMoneyForSpeech(rule.amount, rule.currency, { sign }),
+      formatMoneyForSpeech(rule.amount, rule.currency, {
+        sign,
+        locale: ctx.locale,
+      }),
       `due ${trailing}`,
     ]
       .filter(Boolean)
