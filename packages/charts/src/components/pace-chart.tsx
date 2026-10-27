@@ -1,3 +1,4 @@
+import { textWidth } from "../lib/text-width";
 import {
   BlurMask,
   Canvas,
@@ -239,7 +240,7 @@ function PaceChart({
                       />
                       {font && t > 0 ? (
                         <SkText
-                          x={width - font.getTextWidth(compact(t))}
+                          x={width - textWidth(font, compact(t))}
                           y={y + 4}
                           text={compact(t)}
                           font={font}
@@ -371,7 +372,7 @@ function PaceChart({
               ) : null}
               {font
                 ? labels.map((label) => {
-                    const w = font.getTextWidth(label.text);
+                    const w = textWidth(font, label.text);
                     const x = Math.min(
                       Math.max(
                         pointX(label.index, 0, plotWidth, count) - w / 2,

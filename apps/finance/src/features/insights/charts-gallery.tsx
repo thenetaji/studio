@@ -83,7 +83,10 @@ export default function ChartsGallery() {
     <View className="gap-8">
       <View className="gap-2">
         <Label>Donut</Label>
-        <Card className="mx-4 items-center p-0 py-5">
+        <Card
+          className="mx-4 items-center"
+          style={{ paddingHorizontal: 0, paddingVertical: 20 }}
+        >
           <Donut
             data={donut}
             selectedKey={donutKey}

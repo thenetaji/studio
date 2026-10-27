@@ -18,7 +18,6 @@ import {
   useUpcoming,
 } from "@/data/hooks";
 import { totalInDisplay } from "@/features/accounts/model";
-import { daysLeft } from "@/features/budgets/logic";
 import { CalendarEntryCard } from "@/features/calendar/entry";
 import { SpendHeatmap } from "@/features/heatmap/spend-heatmap";
 import { BudgetStatus } from "@/features/home/budget-status";
@@ -39,10 +38,9 @@ import {
   periodFor,
   previousPeriod,
 } from "@studio/dates";
-import { convertWithRates, formatMoney } from "@studio/money";
+import { formatMoney } from "@studio/money";
 import { Stagger } from "@studio/motion";
 import type { HomeSectionId } from "@/lib/home/layout";
-import { billsDue, leftThisMonth, safePerDay } from "@/lib/home/overview";
 import { budgetPace, elapsedDays } from "@/lib/budgets/pace";
 
 const RECENT_COUNT = 5;
@@ -98,38 +96,6 @@ export default function Home() {
     () => totalInDisplay(accounts, { displayCurrency, rates }).total,
     [accounts, displayCurrency, rates],
   );
-  const bills = React.useMemo(
-    () =>
-      billsDue(
-        occurrences.map((o) => ({
-          dueDate: o.dueDate,
-          kind: o.rule.kind,
-          amount: o.rule.amount,
-          currency: o.rule.currency,
-        })),
-        month,
-        (minor, currency) =>
-          currency === displayCurrency
-            ? minor
-            : rates(currency, displayCurrency) === null
-              ? null
-              : convertWithRates(minor, currency, displayCurrency, rates),
-      ),
-    [occurrences, month, displayCurrency, rates],
-  );
-  const left = leftThisMonth({
-    earned: spend.earned,
-    spent: spend.spent,
-    bills,
-    budget: overall
-      ? {
-          available: overall.available,
-          spent: overall.spent,
-          bills: overall.upcoming,
-        }
-      : undefined,
-  });
-  const remainingDays = daysLeft(overall?.period ?? month, today);
   const overallAtRisk = overall
     ? budgetPace({
         spent: overall.spent,
@@ -140,21 +106,10 @@ export default function Home() {
         elapsedDays: elapsedDays(overall.period, today),
       }).status !== "on_track"
     : false;
-  const perDay = safePerDay(left.left, remainingDays);
 
   const decimals = money.showDecimals ? undefined : 0;
   const fmt = (minor: number, sign: "none" | "auto" = "none") =>
     formatMoney(minor, displayCurrency, { locale, sign, decimals });
-  const billsShown = overall ? overall.upcoming : bills;
-  const leftCaption =
-    billsShown > 0
-      ? `after ${fmt(billsShown)} in bills`
-      : overall
-        ? `of ${fmt(overall.available)}`
-        : "earned less spent";
-  const daysCaption =
-    remainingDays <= 1 ? "Last day" : `a day · ${remainingDays} days left`;
-
   const end = parseKey(month.to);
   const previous = parseKey(previousPeriod(month).from);
   const empty = recent.length === 0;
@@ -246,13 +201,10 @@ export default function Home() {
         <NetWorthHero
           netWorth={fmt(netWorth, "auto")}
           showStrip={!empty}
-          basis={left.basis}
-          left={fmt(left.left, "auto")}
-          leftNegative={left.left < 0}
-          leftCaption={leftCaption}
-          perDay={fmt(perDay)}
-          perDayZero={perDay <= 0}
-          perDayCaption={daysCaption}
+          spent={fmt(spend.spent)}
+          earned={fmt(spend.earned)}
+          earnedZero={spend.earned <= 0}
+          caption={`in ${monthName(end.month)}`}
         />
         {empty ? (
           <EmptyState

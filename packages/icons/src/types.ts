@@ -55,7 +55,7 @@ export const ICON_BACKGROUND_LABELS: Record<
   IconBackground,
   { label: string; detail: string }
 > = {
-  mono: { label: "Mono", detail: "Ink symbol on a neutral tile" },
+  mono: { label: "Metal", detail: "Symbol on a brushed-metal tile" },
   soft: { label: "Soft tiles", detail: "Coloured symbol on a faint tint" },
   solid: {
     label: "Colour tiles",

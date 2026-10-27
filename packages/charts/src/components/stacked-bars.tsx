@@ -1,3 +1,4 @@
+import { textWidth } from "../lib/text-width";
 import {
   Canvas,
   Group,
@@ -138,7 +139,7 @@ function StackedBars({
                     />
                     {font ? (
                       <SkText
-                        x={width - font.getTextWidth(compact(t))}
+                        x={width - textWidth(font, compact(t))}
                         y={y + 4}
                         text={compact(t)}
                         font={font}
@@ -218,7 +219,7 @@ function StackedBars({
                 ? labels.map((label) => {
                     const slot = slots[label.index];
                     if (!slot) return null;
-                    const w = font.getTextWidth(label.text);
+                    const w = textWidth(font, label.text);
                     return (
                       <SkText
                         key={label.index}

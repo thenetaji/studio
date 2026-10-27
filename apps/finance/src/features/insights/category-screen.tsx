@@ -243,7 +243,7 @@ export default function CategoryScreen() {
 
   const header = (
     <View className="px-4 pb-2 pt-2">
-      <Card className="p-0 px-4 pb-1 pt-4">
+      <Card style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4 }}>
         <View className="flex-row items-start justify-between">
           <View className="flex-1">
             <Text variant="footnote" tone="secondary" numberOfLines={1}>

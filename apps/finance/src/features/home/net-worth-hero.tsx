@@ -11,24 +11,19 @@ import {
 } from "@studio/ui";
 import { useSetting } from "@/data/hooks";
 import { haptic, useTokens } from "@studio/theme";
-import type { LeftBasis } from "@/lib/home/overview";
 
 type NetWorthHeroProps = {
   /** Formatted net worth ("₹8,07,855", "−€10"); masked when amounts are hidden. */
   netWorth: string;
   /** When false the strip under the number is left out (empty install). */
   showStrip: boolean;
-  basis: LeftBasis;
-  /** Formatted figure for "Left this month" / "Left in budget". */
-  left: string;
-  leftNegative: boolean;
-  /** "after ₹3,050 in bills", "of ₹75,000". */
-  leftCaption: string;
-  /** Formatted safe-to-spend amount per day. */
-  perDay: string;
-  perDayZero: boolean;
-  /** "15 days left". */
-  perDayCaption: string;
+  /** Formatted spending this month. */
+  spent: string;
+  /** Formatted income this month. */
+  earned: string;
+  earnedZero: boolean;
+  /** "in October". */
+  caption: string;
 };
 
 /** Splits "₹8,07,855" into the symbol (drawn smaller) and the rolling digits. Suffix symbols stay with the digits. */
@@ -100,13 +95,10 @@ function Stat({
 function NetWorthHero({
   netWorth,
   showStrip,
-  basis,
-  left,
-  leftNegative,
-  leftCaption,
-  perDay,
-  perDayZero,
-  perDayCaption,
+  spent,
+  earned,
+  earnedZero,
+  caption,
 }: NetWorthHeroProps) {
   const router = useRouter();
   const { colors } = useTokens();
@@ -171,17 +163,12 @@ function NetWorthHero({
       </Pressable>
       {showStrip ? (
         <Card className="mt-5 flex-row rounded-[20px] px-0 py-3.5">
+          <Stat label="Spent" value={spent} caption={caption} />
           <Stat
-            label={basis === "budget" ? "Left in budget" : "Left this month"}
-            value={left}
-            caption={leftCaption}
-            tone={leftNegative ? "expense" : "default"}
-          />
-          <Stat
-            label="Safe to spend"
-            value={perDay}
-            caption={perDayCaption}
-            tone={perDayZero ? "tertiary" : "default"}
+            label="Earned"
+            value={earned}
+            caption={caption}
+            tone={earnedZero ? "tertiary" : "income"}
             divider
           />
         </Card>

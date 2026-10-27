@@ -1,3 +1,4 @@
+import { textWidth } from "../lib/text-width";
 import {
   Canvas,
   Circle,
@@ -92,7 +93,7 @@ function placeLabels(
   const out: { index: number; text: string; x: number }[] = [];
   let right = -Infinity;
   for (const label of labels) {
-    const w = font.getTextWidth(label.text);
+    const w = textWidth(font, label.text);
     const x = Math.min(
       Math.max(pointX(label.index, 0, plotWidth, count) - w / 2, 0),
       plotWidth - w,
@@ -212,7 +213,7 @@ function TrendLine({
                     />
                     {font ? (
                       <SkText
-                        x={width - font.getTextWidth(label)}
+                        x={width - textWidth(font, label)}
                         y={y + 4}
                         text={label}
                         font={font}

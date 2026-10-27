@@ -38,14 +38,14 @@ const options = [
 const PALETTES: readonly { key: PaletteKey; label: string; detail: string }[] =
   [
     {
+      key: "titanium",
+      label: "Titanium",
+      detail: "Graphite and brushed metal, the default",
+    },
+    {
       key: "system",
       label: "System",
       detail: "Clean white and black, like Apple's apps",
-    },
-    {
-      key: "titanium",
-      label: "Titanium",
-      detail: "Graphite and brushed metal, best in dark",
     },
     {
       key: "paper",
@@ -55,9 +55,9 @@ const PALETTES: readonly { key: PaletteKey; label: string; detail: string }[] =
   ];
 
 const ACCENTS: readonly { key: AccentPresetKey; label: string }[] = [
+  { key: "titanium", label: "Titanium" },
   { key: "ivory", label: "Ink" },
   { key: "blue", label: "Blue" },
-  { key: "titanium", label: "Titanium" },
   { key: "brass", label: "Gold" },
   { key: "slate", label: "Slate" },
   { key: "sage", label: "Sage" },
